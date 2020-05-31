@@ -2,36 +2,32 @@
 
 pragma solidity ^0.6.8;
 
-import "./interface/IERC20.sol";
-import "./lib/Ownable.sol";
-import "./lib/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "./AaveSavingsProtocol.sol";
 
-contract Agic is IERC20, Ownable {
+contract Agic is ERC20, ERC20Detailed, Ownable {
 
     using SafeMath for uint256;
 
-    uint256 private _totalSupply;
-
-    mapping(address => uint256) private _balances;
-
     //The pledge of the eth
+    //质押的eth
     mapping(address => uint256) private _eth;
 
-    mapping(address => mapping(address => uint256)) private _allowances;
-
-    string private _name;
-
-    string private _symbol;
-
-    uint8 private _decimals;
+    //user => aaveContract
+    mapping(address => address) _aaveContract;
 
     //The total amount of eth pledged
+    //总共质押的eth
     uint256 private _totalEth;
 
-    constructor() public {
-        _name = "Automatically Generate Of Interest Coin";
-        _symbol = "AGIC";
-        _decimals = 18;
+    constructor() public ERC20Detailed(
+        "Automatically Generate Of Interest Coin",
+        "AGIC",
+        18) {
     }
 
     modifier notZeroAddress(address _to) {
@@ -50,84 +46,26 @@ contract Agic is IERC20, Ownable {
         _;
     }
 
-    function totalSupply() public view override returns (uint256){
-        return _totalSupply;
-    }
-
-    function name() public view returns (string memory){
-        return _name;
-    }
-
-    function symbol() public view returns (string memory){
-        return _symbol;
-    }
-
-    function decimals() public view returns (uint8){
-        return _decimals;
-    }
-
-    function transfer(address to, uint256 amount) public override notZeroAddress(to) returns (bool) {
-        _transfer(msg.sender, to, amount);
-        return true;
-    }
-
-    function balanceOf(address owner) public view override notZeroAddress(owner) returns (uint256){
-        return _balances[owner];
-    }
-
     function ethOf(address owner) public view notZeroAddress(owner) returns (uint256){
         return _eth[owner];
     }
 
-    function allowance(address owner, address spender) public view override notZeroAddressDouble(owner, spender) returns (uint256){
-        return _allowances[owner][spender];
-    }
-
-    function approve(address spender, uint256 amount) public override notZeroAddress(spender) hasAmount(amount) returns (bool){
-        _allowances[msg.sender][spender] = _allowances[msg.sender][spender].add(amount);
-        emit Approval(msg.sender, spender, amount);
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint256 amount) public override returns (bool){
-        _transfer(from, to, amount);
-        _allowances[from][msg.sender] = _allowances[from][msg.sender].sub(amount);
-        return true;
-    }
-
     /// @dev Pledge eth in exchange for AGIC
-    function buy() public payable returns (uint256) {
+    //质押的eth换成agic
+    function deposit() public payable returns (uint256) {
         uint256 eth = msg.value;
-        uint256 amount = eth.mul(4);
+        uint256 agic = eth.mul(4);
         _totalEth = _totalEth.add(eth);
         _eth[msg.sender] = _eth[msg.sender].add(eth);
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
-        return amount;
+        super._mint(msg.sender, agic);
+        AaveSavingsProtocol aave = new AaveSavingsProtocol(msg.sender, owner());
+        _aaveContract[msg.sender] = address(aave);
+        aave.deposit{value : eth}();
+        return agic;
     }
 
-    function redemption(uint256 amount) public payable hasAmount(amount) {
+    function redeem(uint256 amount) public payable hasAmount(amount) {
 
-
-    }
-
-    function _mint(address _account, uint256 _eth) private notZeroAddress(_account) {
-        uint256 wzm = _eth * 4;
-        _balances[_account] += wzm;
-        _totalSupply += wzm;
-        _eth += _eth;
-    }
-
-    function _burn(address payable _account, uint256 _amount) private notZeroAddress(_account) {
-        _balances[_account] -= _amount;
-        _totalSupply -= _amount;
-        uint256 eth = _amount / 4;
-        _eth -= eth;
-    }
-
-    function _transfer(address _sender, address _recipient, uint256 _amount) internal notZeroAddressDouble(_sender, _recipient) {
-        _balances[_sender] = _balances[_sender].sub(_amount, "transfer amount exceeds balance");
-        _balances[_recipient] = _balances[_recipient].add(_amount);
-        emit Transfer(_sender, _recipient, _amount);
     }
 
 }
