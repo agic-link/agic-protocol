@@ -56,10 +56,10 @@ contract AaveSavingsProtocol is ConstantAddresses, Ownable {
     function withdrawal() public onlyOwner {
         uint256 balance = address(this).balance;
         // service charge
-        uint256 amount = balance - 100;
+        uint256 amount = balance - 1e7;
         _depositor.transfer(amount);
         address payable owner = address(uint160(owner()));
-        owner.transfer(100);
+        owner.transfer(1e7);
     }
 
 }

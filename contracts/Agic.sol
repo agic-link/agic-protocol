@@ -20,10 +20,6 @@ contract Agic is ERC20, ERC20Detailed, Ownable {
     //user => aaveContract
     mapping(address => address) _aaveContract;
 
-    //The total amount of eth pledged
-    //总共质押的eth
-    uint256 private _totalEth;
-
     constructor() public ERC20Detailed(
         "Automatically Generate Of Interest Coin",
         "AGIC",
@@ -35,19 +31,12 @@ contract Agic is ERC20, ERC20Detailed, Ownable {
         _;
     }
 
-    modifier notZeroAddressDouble(address _from, address _to) {
-        require(_from != address(0), "transfer from the zero address");
-        require(_to != address(0), "transfer to the zero address");
-        _;
-    }
-
-    modifier hasAmount(uint256 _amount) {
-        require(_balances[msg.sender] > _amount, "not have this amount");
-        _;
-    }
-
     function ethOf(address owner) public view notZeroAddress(owner) returns (uint256){
         return _eth[owner];
+    }
+
+    function totalEth() public view returns (uint256){
+        return address(this).balance;
     }
 
     /// @dev Pledge eth in exchange for AGIC
@@ -55,17 +44,42 @@ contract Agic is ERC20, ERC20Detailed, Ownable {
     function deposit() public payable returns (uint256) {
         uint256 eth = msg.value;
         uint256 agic = eth.mul(4);
-        _totalEth = _totalEth.add(eth);
         _eth[msg.sender] = _eth[msg.sender].add(eth);
         super._mint(msg.sender, agic);
-        AaveSavingsProtocol aave = new AaveSavingsProtocol(msg.sender, owner());
-        _aaveContract[msg.sender] = address(aave);
+        address aaveProtocolAddress = _aaveContract[msg.sender];
+        AaveSavingsProtocol aave;
+        if (aaveProtocolAddress == address(0)) {
+            aave = new AaveSavingsProtocol(msg.sender, _addressToPayable(owner()));
+            _aaveContract[msg.sender] = address(aave);
+        } else {
+            aave = AaveSavingsProtocol(aaveProtocolAddress);
+        }
         aave.deposit{value : eth}();
         return agic;
     }
 
-    function redeem(uint256 amount) public payable hasAmount(amount) {
+    //get 当前赚取的利息
+    function interestAmount() public returns (uint256){
+        address aaveProtocolAddress = _aaveContract[msg.sender];
+        if (aaveProtocolAddress == address(0)) {
+            return 0;
+        } else {
+            AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
+            return aave.interestAmount();
+        }
+    }
 
+    //赎回eth并获得利息
+    function redeem(uint256 amount) public {
+        address aaveProtocolAddress = _aaveContract[msg.sender];
+        require(aaveProtocolAddress != address(0), "not have protocol");
+        AaveSavingsProtocol aave = AaveSavingsProtocol(address(_aaveContract[msg.sender]));
+        aave.redeem(amount);
+        aave.withdrawal();
+    }
+
+    function _addressToPayable(address _address) private pure returns (address payable){
+        return address(uint160(_address));
     }
 
 }
