@@ -3,13 +3,12 @@
 pragma solidity ^0.6.8;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./AaveSavingsProtocol.sol";
 
-contract Agic is ERC20, ERC20Detailed, Ownable {
+contract Agic is ERC20, Ownable, Initializable {
 
     using SafeMath for uint256;
 
@@ -20,10 +19,9 @@ contract Agic is ERC20, ERC20Detailed, Ownable {
     //user => aaveContract
     mapping(address => address) _aaveContract;
 
-    constructor() public ERC20Detailed(
+    constructor() public ERC20(
         "Automatically Generate Of Interest Coin",
-        "AGIC",
-        18) {
+        "AGIC") {
     }
 
     modifier notZeroAddress(address _to) {

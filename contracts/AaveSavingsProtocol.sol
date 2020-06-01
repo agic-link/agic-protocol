@@ -3,7 +3,7 @@
 pragma solidity ^0.6.8;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./constants/ConstantAddresses.sol";
 import "./aave/ILendingPool.sol";
 import "./aave/ILendingPoolAddressesProvider.sol";
