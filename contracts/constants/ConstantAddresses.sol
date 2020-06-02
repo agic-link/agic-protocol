@@ -6,5 +6,5 @@ import "./ConstantAddressesMainnet.sol";
 import "./ConstantAddressesRopsten.sol";
 
 
-contract ConstantAddresses is ConstantAddressesMainnet {
+contract ConstantAddresses is ConstantAddressesRopsten {
 }
