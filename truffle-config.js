@@ -15,8 +15,8 @@ module.exports = {
                 return new HDWalletProvider(mnemonic, process.env.ROPSTEN_INFURA_ENDPOINT)
             },
             network_id: '3',
-            gas: 4000000,
-            gasPrice: 800000000
+            gasPrice: 10 ^ 9,
+            gasLimit: 10 ^ 15
         },
         mainnet: {
             provider: () => {
