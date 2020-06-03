@@ -8,6 +8,7 @@ import "./constants/ConstantAddresses.sol";
 import "./aave/ILendingPool.sol";
 import "./aave/ILendingPoolAddressesProvider.sol";
 import "./aave/IAToken.sol";
+import "./Agic.sol";
 
 contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
 
@@ -22,34 +23,27 @@ contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
 
     address payable private _referral;
 
-    uint256 private _depositEth;
-
-    uint256 private _balanceOfEth;
-
-    uint256 private _gas = 1e12;
-
     constructor(address payable depositor, address payable referral) public {
         _depositor = depositor;
         _referral = referral;
         __Ownable_init();
     }
 
-    function deposit(uint256 amount) public payable onlyOwner {
-        uint256 eth = msg.value;
-        uint256 gasAmount = eth.sub(amount);
-        lendingPool.deposit { value : amount} (AAVE_MARKET_ETH, eth, 0);
-        _depositEth = _depositEth.add(eth);
+    function deposit() public payable onlyOwner {
+        uint256 amount = msg.value;
+        lendingPool.deposit { value : amount} (AAVE_MARKET_ETH, amount, 0);
+    }
+
+    function principalBalanceOf() public view returns (uint256){
+        return aToken.principalBalanceOf(_depositor);
     }
 
     function balanceOf() public view onlyOwner returns (uint256){
-        if (address(aToken) == address(0)) {
-            return 0;
-        }
-        return aToken.balanceOf(_depositor);
+        return aToken.balanceOf(address(this));
     }
 
     function interestAmount() public view onlyOwner returns (uint256){
-        return balanceOf().sub(_depositEth);
+        return balanceOf().sub(principalBalanceOf());
     }
 
     function redeem(uint256 _amount) public onlyOwner {
@@ -60,9 +54,14 @@ contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
     function withdrawal() public onlyOwner {
         uint256 balance = address(this).balance;
         // service charge
-        uint256 amount = balance - 1e7;
-        _depositor.transfer(amount);
-        _referral.transfer(1e7);
+        _depositor.transfer(_mulDiv(balance, 97, 100));
+        _referral.transfer(_mulDiv(balance, 3, 100));
     }
+
+    function _mulDiv(uint256 a, uint256 b, uint256 c) private returns (uint256){
+        return a.mul(c).div(b);
+    }
+
+receive() external payable {}
 
 }
