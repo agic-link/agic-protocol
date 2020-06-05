@@ -1,0 +1,231 @@
+{
+  "contracts": {
+    "Agic": {
+      "address": "0x8B2eB179C2D100298c8D3672e56da23B01a4Cae5",
+      "constructorCode": "608060405234801561001057600080fd5b50614f1d806100206000396000f3fe",
+      "bodyBytecodeHash": "85d08522eda0dd536cfb9376d32275e22905c407df766fc797991e3c1f1369d0",
+      "localBytecodeHash": "0702fc4f7235152d757e1bf5f3848cc2a8e7c9c9a8cefc230c62d594fb856bed",
+      "deployedBytecodeHash": "0702fc4f7235152d757e1bf5f3848cc2a8e7c9c9a8cefc230c62d594fb856bed",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_mapping<t_uint256>": {
+          "id": "t_mapping<t_uint256>",
+          "valueType": "t_uint256",
+          "label": "mapping(key => uint256)",
+          "kind": "mapping"
+        },
+        "t_string": {
+          "id": "t_string",
+          "kind": "elementary",
+          "label": "string"
+        },
+        "t_uint8": {
+          "id": "t_uint8",
+          "kind": "elementary",
+          "label": "uint8"
+        },
+        "t_array:44<t_uint256>": {
+          "id": "t_array:44<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "44",
+          "kind": "array",
+          "label": "uint256[44]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        },
+        "t_array:49<t_uint256>": {
+          "id": "t_array:49<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "49",
+          "kind": "array",
+          "label": "uint256[49]"
+        },
+        "t_mapping<t_address>": {
+          "id": "t_mapping<t_address>",
+          "valueType": "t_address",
+          "label": "mapping(key => address)",
+          "kind": "mapping"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 49,
+          "type": "t_bool",
+          "src": "757:24:1"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 51,
+          "type": "t_bool",
+          "src": "876:25:1"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 116,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:1"
+        },
+        {
+          "contract": "ContextUpgradeSafe",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/GSN/Context.sol",
+          "label": "__gap",
+          "astId": 43,
+          "type": "t_array:50<t_uint256>",
+          "src": "1277:25:0"
+        },
+        {
+          "contract": "ERC20UpgradeSafe",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
+          "label": "_balances",
+          "astId": 467,
+          "type": "t_mapping<t_uint256>",
+          "src": "1481:46:4"
+        },
+        {
+          "contract": "ERC20UpgradeSafe",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
+          "label": "_allowances",
+          "astId": 473,
+          "type": "t_mapping<t_uint256>",
+          "src": "1534:69:4"
+        },
+        {
+          "contract": "ERC20UpgradeSafe",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
+          "label": "_totalSupply",
+          "astId": 475,
+          "type": "t_uint256",
+          "src": "1610:28:4"
+        },
+        {
+          "contract": "ERC20UpgradeSafe",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
+          "label": "_name",
+          "astId": 477,
+          "type": "t_string",
+          "src": "1645:20:4"
+        },
+        {
+          "contract": "ERC20UpgradeSafe",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
+          "label": "_symbol",
+          "astId": 479,
+          "type": "t_string",
+          "src": "1671:22:4"
+        },
+        {
+          "contract": "ERC20UpgradeSafe",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
+          "label": "_decimals",
+          "astId": 481,
+          "type": "t_uint8",
+          "src": "1699:23:4"
+        },
+        {
+          "contract": "ERC20UpgradeSafe",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
+          "label": "__gap",
+          "astId": 976,
+          "type": "t_array:44<t_uint256>",
+          "src": "11053:25:4"
+        },
+        {
+          "contract": "OwnableUpgradeSafe",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol",
+          "label": "_owner",
+          "astId": 128,
+          "type": "t_address",
+          "src": "651:22:2"
+        },
+        {
+          "contract": "OwnableUpgradeSafe",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol",
+          "label": "__gap",
+          "astId": 246,
+          "type": "t_array:49<t_uint256>",
+          "src": "2434:25:2"
+        },
+        {
+          "contract": "Agic",
+          "path": "contracts/Agic.sol",
+          "label": "_totalPledgeEth",
+          "astId": 1360,
+          "type": "t_uint256",
+          "src": "352:31:8"
+        },
+        {
+          "contract": "Agic",
+          "path": "contracts/Agic.sol",
+          "label": "_pledgeEth",
+          "astId": 1364,
+          "type": "t_mapping<t_uint256>",
+          "src": "390:46:8"
+        },
+        {
+          "contract": "Agic",
+          "path": "contracts/Agic.sol",
+          "label": "_aaveContract",
+          "astId": 1368,
+          "type": "t_mapping<t_address>",
+          "src": "470:41:8"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    }
+  },
+  "solidityLibs": {},
+  "proxies": {
+    "agic/Agic": [
+      {
+        "address": "0x83D1cEC9aD77a944F05A387ff95c33f36f2F671e",
+        "version": "1.0.0",
+        "implementation": "0x8B2eB179C2D100298c8D3672e56da23B01a4Cae5",
+        "admin": "0x76e085d7FDF7882768D9fCB5F49974A0a55901a4",
+        "kind": "Upgradeable"
+      }
+    ]
+  },
+  "manifestVersion": "2.2",
+  "version": "1.0.0",
+  "dependencies": {
+    "@openzeppelin/contracts-ethereum-package": {
+      "package": "0x2a9e7B63514438906A83a1e320dBBD814D417002",
+      "version": "3.0.0"
+    }
+  },
+  "proxyAdmin": {
+    "address": "0x76e085d7FDF7882768D9fCB5F49974A0a55901a4"
+  }
+}

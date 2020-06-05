@@ -108,5 +108,9 @@ dist
 .iwp
 .iws
 
-.openzeppelin/
-build/
+# OpenZeppelin
+.openzeppelin/dev-*.json
+.openzeppelin/.session
+
+# solidity
+build

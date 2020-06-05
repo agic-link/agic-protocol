@@ -8,7 +8,6 @@ import "./constants/ConstantAddresses.sol";
 import "./aave/ILendingPool.sol";
 import "./aave/ILendingPoolAddressesProvider.sol";
 import "./aave/IAToken.sol";
-import "./Agic.sol";
 
 contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
 
@@ -23,6 +22,8 @@ contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
 
     address payable private _referral;
 
+    uint256 private _pledgeEth;
+
     constructor(address payable depositor, address payable referral) public {
         _depositor = depositor;
         _referral = referral;
@@ -32,10 +33,7 @@ contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
     function deposit() public payable onlyOwner {
         uint256 amount = msg.value;
         lendingPool.deposit { value : amount} (AAVE_MARKET_ETH, amount, 0);
-    }
-
-    function principalBalanceOf() public view returns (uint256){
-        return aToken.principalBalanceOf(_depositor);
+        _pledgeEth = _pledgeEth.add(amount);
     }
 
     function balanceOf() public view onlyOwner returns (uint256){
@@ -43,25 +41,33 @@ contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
     }
 
     function interestAmount() public view onlyOwner returns (uint256){
-        return balanceOf().sub(principalBalanceOf());
+        return balanceOf().sub(_pledgeEth);
     }
 
-    function redeem(uint256 _amount) public onlyOwner {
-        require(balanceOf() >= _amount, "not have so much balance");
-        aToken.redeem(_amount);
+    function redeem() public onlyOwner {
+        aToken.redeem(balanceOf());
     }
 
     function withdrawal() public onlyOwner {
         uint256 balance = address(this).balance;
-        // service charge
-        _depositor.transfer(_mulDiv(balance, 97, 100));
-        _referral.transfer(_mulDiv(balance, 3, 100));
+        uint256 interest = balance.sub(_pledgeEth);
+        if (interest > 0) {
+            uint256 serviceCharge = _mulDiv(interest, 3, 100);
+            uint256 newBalance = balance.sub(serviceCharge);
+            _depositor.transfer(newBalance);
+            _referral.transfer(serviceCharge);
+            emit LedgerAccount(interest, serviceCharge, newBalance);
+        } else {
+            _depositor.transfer(balance);
+        }
     }
 
-    function _mulDiv(uint256 a, uint256 b, uint256 c) private returns (uint256){
+    function _mulDiv(uint256 a, uint256 b, uint256 c) private pure returns (uint256){
         return a.mul(c).div(b);
     }
 
-receive() external payable {}
+    event LedgerAccount(uint256 interest, uint256 serviceCharge, uint256 balance);
+
+    receive() external payable {}
 
 }

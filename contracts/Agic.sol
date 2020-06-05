@@ -31,9 +31,9 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
     function invalidAaveProtocol() public {
         _aaveContract[msg.sender] = address(0);
         uint256 pledgeEth = _pledgeEth[msg.sender];
-        _pledgeEth[msg.sender] = 0;
         uint256 agic = pledgeEth.mul(4);
         _burn(msg.sender, agic);
+        _pledgeEth[msg.sender] = 0;
         _totalPledgeEth = _totalPledgeEth.sub(pledgeEth);
     }
 
@@ -94,21 +94,19 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
         }
     }
 
-    //赎回eth并获得利息
-    function redeem(uint256 amount) public {
+    //赎回全部eth并获得利息
+    function redeem() public {
         address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
         require(aaveProtocolAddress != address(0), "not have protocol");
-        AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
-        uint256 aEth = amount.div(4);
-        aave.redeem(aEth);
         uint256 eth = _pledgeEth[msg.sender];
-        if (eth > aEth) {
-            _burn(msg.sender, amount);
-        } else {
-            _burn(msg.sender, eth.mul(4));
-        }
+        require(eth > 0, "not have pledge Eth");
+        AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
+        aave.redeem();
         aave.withdrawal();
-        emit Redeem(msg.sender, aEth);
+        _burn(msg.sender, eth.mul(4));
+        _pledgeEth[msg.sender] = _pledgeEth[msg.sender].sub(eth);
+        _totalPledgeEth = _totalPledgeEth.sub(eth);
+        emit Redeem(msg.sender, eth);
     }
 
     function _addressToPayable(address _address) private pure returns (address payable){
@@ -119,5 +117,5 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
 
     event Redeem(address _sender, uint256 _value);
 
-receive() external payable {}
+    receive() external payable {}
 }
