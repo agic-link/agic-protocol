@@ -8,7 +8,7 @@
 
 
 ``` shell
-truffle complie
+npx oz compile [--optimizer on]
 
 npx openzeppelin deploy
 
