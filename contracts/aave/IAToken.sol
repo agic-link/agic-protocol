@@ -46,5 +46,5 @@ interface IAToken {
     **/
     function principalBalanceOf(address _user) external view returns (uint256);
 
-
+    function transfer(address recipient, uint256 amount) external returns (bool);
 }

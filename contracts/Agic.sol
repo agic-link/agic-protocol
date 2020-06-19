@@ -12,8 +12,6 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
 
     uint256 private _totalPledgeEth;
 
-    mapping(address => uint256) private _pledgeEth;
-
     //user => aaveContract
     mapping(address => address) _aaveContract;
 
@@ -30,10 +28,9 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
 
     function invalidAaveProtocol() public {
         _aaveContract[msg.sender] = address(0);
-        uint256 pledgeEth = _pledgeEth[msg.sender];
-        uint256 agic = pledgeEth.mul(4);
+        uint256 agic = balanceOf(msg.sender);
         _burn(msg.sender, agic);
-        _pledgeEth[msg.sender] = 0;
+        uint256 pledgeEth = agic.div(4);
         _totalPledgeEth = _totalPledgeEth.sub(pledgeEth);
     }
 
@@ -43,6 +40,26 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
 
     function balanceOf(address owner) public view override(ERC20UpgradeSafe) notZeroAddress(owner) returns (uint256){
         return _ethOfAave(owner).mul(4);
+    }
+
+    function pledgeEth(address owner) public view notZeroAddress(owner) returns (uint256){
+        address payable aaveProtocolAddress = _addressToPayable(_aaveContract[owner]);
+        if (aaveProtocolAddress == address(0)) {
+            return 0;
+        } else {
+            AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
+            return aave.getPledgeEth();
+        }
+    }
+
+    function _transfer(address sender, address recipient, uint256 amount) internal override(ERC20UpgradeSafe) {
+        require(amount > 0, "Transferred amount needs to be greater than zero");
+        require(balanceOf(sender) > amount, "ERC20: transfer amount exceeds balance");
+        uint256 eth = amount.div(4);
+        AaveSavingsProtocol aave = _getAaveProtocol(sender);
+        aave.transfer(recipient, eth);
+        super._transfer(sender, recipient, amount);
+        _totalPledgeEth = _totalPledgeEth.sub(eth);
     }
 
     function _ethOfAave(address owner) private view returns (uint256){
@@ -55,8 +72,10 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
         }
     }
 
-    function pledgeEth(address owner) public view notZeroAddress(owner) returns (uint256){
-        return _pledgeEth[owner];
+    function _getAaveProtocol(address _owner) private view returns (AaveSavingsProtocol){
+        address payable aaveProtocolAddress = _addressToPayable(_aaveContract[_owner]);
+        require(aaveProtocolAddress != address(0), "not have aave protocol");
+        return AaveSavingsProtocol(aaveProtocolAddress);
     }
 
     function totalPledgeEth() public view returns (uint256){
@@ -68,7 +87,6 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
     function deposit() public payable {
         uint256 eth = msg.value;
         uint256 agic = eth.mul(4);
-        _pledgeEth[msg.sender] = _pledgeEth[msg.sender].add(eth);
         _totalPledgeEth = _totalPledgeEth.add(eth);
         super._mint(msg.sender, agic);
         address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
@@ -98,13 +116,13 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
     function redeem() public {
         address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
         require(aaveProtocolAddress != address(0), "not have protocol");
-        uint256 eth = _pledgeEth[msg.sender];
-        require(eth > 0, "not have pledge Eth");
+        uint256 agic = balanceOf(msg.sender);
+        require(agic > 0, "not have pledge Eth");
         AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
         aave.redeem();
         aave.withdrawal();
-        _burn(msg.sender, eth.mul(4));
-        _pledgeEth[msg.sender] = _pledgeEth[msg.sender].sub(eth);
+        _burn(msg.sender, agic);
+        uint256 eth = agic.div(4);
         _totalPledgeEth = _totalPledgeEth.sub(eth);
         emit Redeem(msg.sender, eth);
     }
