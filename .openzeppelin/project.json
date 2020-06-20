@@ -8,6 +8,7 @@
   "version": "1.0.0",
   "compiler": {
     "compilerSettings": {
+      "evmVersion": "istanbul",
       "optimizer": {
         "enabled": false,
         "runs": "200"
@@ -17,7 +18,7 @@
       "enabled": false
     },
     "manager": "openzeppelin",
-    "solcVersion": "0.6.10",
+    "solcVersion": "0.6.8",
     "artifactsDir": "build/contracts",
     "contractsDir": "contracts"
   },

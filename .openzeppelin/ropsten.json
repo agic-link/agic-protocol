@@ -1,11 +1,11 @@
 {
   "contracts": {
     "Agic": {
-      "address": "0xa19CBC20F46c279EC877edc2fDa43BE20Ddebf72",
-      "constructorCode": "608060405234801561001057600080fd5b50614f1d806100206000396000f3fe",
-      "bodyBytecodeHash": "87158202666667184a1be92c66bcf45f3b3754b3432e8d02b16abf94c157c382",
-      "localBytecodeHash": "eacb826f0a68f1267cfac175c3444e1e16a0d06961ca6a69dacf32c45804a89c",
-      "deployedBytecodeHash": "eacb826f0a68f1267cfac175c3444e1e16a0d06961ca6a69dacf32c45804a89c",
+      "address": "0x2E5Ac19f07ae6D751afCc4c706cdA700807D2cFA",
+      "constructorCode": "608060405234801561001057600080fd5b50615536806100206000396000f3fe",
+      "bodyBytecodeHash": "c05a0f70e9ce1d1fce024bbe447fb75c5fa62d27f0a5c6175525244f50c29f2d",
+      "localBytecodeHash": "62f8514682e06a1f42a98bff5ea4d4642b106fa97e0b5321f14d7add910ba574",
+      "deployedBytecodeHash": "62f8514682e06a1f42a98bff5ea4d4642b106fa97e0b5321f14d7add910ba574",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -71,7 +71,7 @@
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 50,
+          "astId": 49,
           "type": "t_bool",
           "src": "757:24:1"
         },
@@ -79,7 +79,7 @@
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 53,
+          "astId": 51,
           "type": "t_bool",
           "src": "876:25:1"
         },
@@ -87,7 +87,7 @@
           "contract": "Initializable",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 118,
+          "astId": 116,
           "type": "t_array:50<t_uint256>",
           "src": "1982:29:1"
         },
@@ -103,7 +103,7 @@
           "contract": "ERC20UpgradeSafe",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
           "label": "_balances",
-          "astId": 469,
+          "astId": 467,
           "type": "t_mapping<t_uint256>",
           "src": "1481:46:4"
         },
@@ -111,7 +111,7 @@
           "contract": "ERC20UpgradeSafe",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
           "label": "_allowances",
-          "astId": 475,
+          "astId": 473,
           "type": "t_mapping<t_uint256>",
           "src": "1534:69:4"
         },
@@ -119,7 +119,7 @@
           "contract": "ERC20UpgradeSafe",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
           "label": "_totalSupply",
-          "astId": 477,
+          "astId": 475,
           "type": "t_uint256",
           "src": "1610:28:4"
         },
@@ -127,7 +127,7 @@
           "contract": "ERC20UpgradeSafe",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
           "label": "_name",
-          "astId": 479,
+          "astId": 477,
           "type": "t_string",
           "src": "1645:20:4"
         },
@@ -135,7 +135,7 @@
           "contract": "ERC20UpgradeSafe",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
           "label": "_symbol",
-          "astId": 481,
+          "astId": 479,
           "type": "t_string",
           "src": "1671:22:4"
         },
@@ -143,7 +143,7 @@
           "contract": "ERC20UpgradeSafe",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
           "label": "_decimals",
-          "astId": 483,
+          "astId": 481,
           "type": "t_uint8",
           "src": "1699:23:4"
         },
@@ -151,7 +151,7 @@
           "contract": "ERC20UpgradeSafe",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
           "label": "__gap",
-          "astId": 978,
+          "astId": 976,
           "type": "t_array:44<t_uint256>",
           "src": "11053:25:4"
         },
@@ -159,7 +159,7 @@
           "contract": "OwnableUpgradeSafe",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol",
           "label": "_owner",
-          "astId": 130,
+          "astId": 128,
           "type": "t_address",
           "src": "651:22:2"
         },
@@ -167,7 +167,7 @@
           "contract": "OwnableUpgradeSafe",
           "path": "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol",
           "label": "__gap",
-          "astId": 248,
+          "astId": 246,
           "type": "t_array:49<t_uint256>",
           "src": "2434:25:2"
         },
@@ -175,25 +175,17 @@
           "contract": "Agic",
           "path": "contracts/Agic.sol",
           "label": "_totalPledgeEth",
-          "astId": 1362,
+          "astId": 1389,
           "type": "t_uint256",
           "src": "352:31:8"
         },
         {
           "contract": "Agic",
           "path": "contracts/Agic.sol",
-          "label": "_pledgeEth",
-          "astId": 1366,
-          "type": "t_mapping<t_uint256>",
-          "src": "390:46:8"
-        },
-        {
-          "contract": "Agic",
-          "path": "contracts/Agic.sol",
           "label": "_aaveContract",
-          "astId": 1370,
+          "astId": 1393,
           "type": "t_mapping<t_address>",
-          "src": "470:41:8"
+          "src": "417:41:8"
         }
       ],
       "warnings": {
@@ -209,10 +201,10 @@
   "proxies": {
     "Agic/Agic": [
       {
-        "address": "0x094310aDddD1DB8EA2253a56B0CC498b14B56318",
+        "address": "0x6B395Ef0435e24636C5366Bf712cFc9521A53af3",
         "version": "1.0.0",
-        "implementation": "0xa19CBC20F46c279EC877edc2fDa43BE20Ddebf72",
-        "admin": "0x02858B18eAf07f2f518eCd5647C1E8f8140b0690",
+        "implementation": "0x2E5Ac19f07ae6D751afCc4c706cdA700807D2cFA",
+        "admin": "0x9dFbe244cA3Eb12606fDE3E09d723754c06a11d4",
         "kind": "Upgradeable"
       }
     ]
@@ -220,6 +212,6 @@
   "manifestVersion": "2.2",
   "version": "1.0.0",
   "proxyAdmin": {
-    "address": "0x02858B18eAf07f2f518eCd5647C1E8f8140b0690"
+    "address": "0x9dFbe244cA3Eb12606fDE3E09d723754c06a11d4"
   }
 }
