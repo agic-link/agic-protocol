@@ -4,7 +4,7 @@
     "Agic": "Agic"
   },
   "dependencies": {},
-  "name": "Agic",
+  "name": "agic",
   "version": "1.0.0",
   "compiler": {
     "compilerSettings": {

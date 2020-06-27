@@ -1,7 +1,7 @@
 {
   "contracts": {
     "Agic": {
-      "address": "0x2E5Ac19f07ae6D751afCc4c706cdA700807D2cFA",
+      "address": "0xB0756657a128B337545f95d14F40c64193104D07",
       "constructorCode": "608060405234801561001057600080fd5b50615536806100206000396000f3fe",
       "bodyBytecodeHash": "c05a0f70e9ce1d1fce024bbe447fb75c5fa62d27f0a5c6175525244f50c29f2d",
       "localBytecodeHash": "62f8514682e06a1f42a98bff5ea4d4642b106fa97e0b5321f14d7add910ba574",
@@ -199,12 +199,12 @@
   },
   "solidityLibs": {},
   "proxies": {
-    "Agic/Agic": [
+    "agic/Agic": [
       {
-        "address": "0x6B395Ef0435e24636C5366Bf712cFc9521A53af3",
+        "address": "0x715ba73309922E9cE30b428891BEFC9BA4a3c8CB",
         "version": "1.0.0",
-        "implementation": "0x2E5Ac19f07ae6D751afCc4c706cdA700807D2cFA",
-        "admin": "0x9dFbe244cA3Eb12606fDE3E09d723754c06a11d4",
+        "implementation": "0xB0756657a128B337545f95d14F40c64193104D07",
+        "admin": "0x2046f2F0392430498dd768E3bA3C8270853F3d50",
         "kind": "Upgradeable"
       }
     ]
@@ -212,6 +212,6 @@
   "manifestVersion": "2.2",
   "version": "1.0.0",
   "proxyAdmin": {
-    "address": "0x9dFbe244cA3Eb12606fDE3E09d723754c06a11d4"
+    "address": "0x2046f2F0392430498dd768E3bA3C8270853F3d50"
   }
 }
