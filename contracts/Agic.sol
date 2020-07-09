@@ -59,7 +59,6 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
         AaveSavingsProtocol aave = _getAaveProtocol(sender);
         aave.transfer(recipient, eth);
         super._transfer(sender, recipient, amount);
-        _totalPledgeEth = _totalPledgeEth.sub(eth);
     }
 
     function _ethOfAave(address owner) private view returns (uint256){
@@ -119,11 +118,11 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
         uint256 agic = balanceOf(msg.sender);
         require(agic > 0, "not have pledge Eth");
         AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
+        uint256 pledgeEth = aave.getPledgeEth();
         aave.redeem();
-        aave.withdrawal();
-        _burn(msg.sender, agic);
+        _burn(msg.sender, pledgeEth.mul(4));
         uint256 eth = agic.div(4);
-        _totalPledgeEth = _totalPledgeEth.sub(eth);
+        _totalPledgeEth = _totalPledgeEth.sub(pledgeEth);
         emit Redeem(msg.sender, eth);
     }
 
@@ -135,5 +134,5 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
 
     event Redeem(address _sender, uint256 _value);
 
-    receive() external payable {}
+receive() external payable {}
 }

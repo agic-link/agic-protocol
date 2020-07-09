@@ -1,11 +1,11 @@
 {
   "contracts": {
     "Agic": {
-      "address": "0xB0756657a128B337545f95d14F40c64193104D07",
-      "constructorCode": "608060405234801561001057600080fd5b50615536806100206000396000f3fe",
-      "bodyBytecodeHash": "c05a0f70e9ce1d1fce024bbe447fb75c5fa62d27f0a5c6175525244f50c29f2d",
-      "localBytecodeHash": "62f8514682e06a1f42a98bff5ea4d4642b106fa97e0b5321f14d7add910ba574",
-      "deployedBytecodeHash": "62f8514682e06a1f42a98bff5ea4d4642b106fa97e0b5321f14d7add910ba574",
+      "address": "0x8d74dD8d74D07cEfb30Dd956269075e5fE979581",
+      "constructorCode": "608060405234801561001057600080fd5b50615436806100206000396000f3fe",
+      "bodyBytecodeHash": "f6214d4e2933e98d34c984f1ae007a55d008bbbcfae664a741e4e80d9a21c36c",
+      "localBytecodeHash": "6b237da7464d60588f65e437b4ac925c6b2eaa61439ec2376ab6095d15f012c4",
+      "deployedBytecodeHash": "6b237da7464d60588f65e437b4ac925c6b2eaa61439ec2376ab6095d15f012c4",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -175,7 +175,7 @@
           "contract": "Agic",
           "path": "contracts/Agic.sol",
           "label": "_totalPledgeEth",
-          "astId": 1389,
+          "astId": 1402,
           "type": "t_uint256",
           "src": "352:31:8"
         },
@@ -183,7 +183,7 @@
           "contract": "Agic",
           "path": "contracts/Agic.sol",
           "label": "_aaveContract",
-          "astId": 1393,
+          "astId": 1406,
           "type": "t_mapping<t_address>",
           "src": "417:41:8"
         }
@@ -193,7 +193,9 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     }
   },
@@ -201,9 +203,16 @@
   "proxies": {
     "agic/Agic": [
       {
-        "address": "0x715ba73309922E9cE30b428891BEFC9BA4a3c8CB",
+        "address": "0xf764FE1d7F04b29763ad52ACA1EFB8a15d2507bb",
         "version": "1.0.0",
-        "implementation": "0xB0756657a128B337545f95d14F40c64193104D07",
+        "implementation": "0xB0E0D0Bc496E9f131d72c3aDfcA8Cb3951F4026f",
+        "admin": "0x2046f2F0392430498dd768E3bA3C8270853F3d50",
+        "kind": "Upgradeable"
+      },
+      {
+        "address": "0x00B042D3E45099D6442D9BA5cD90A990dB59Cc96",
+        "version": "1.0.0",
+        "implementation": "0x8d74dD8d74D07cEfb30Dd956269075e5fE979581",
         "admin": "0x2046f2F0392430498dd768E3bA3C8270853F3d50",
         "kind": "Upgradeable"
       }
