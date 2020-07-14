@@ -134,5 +134,5 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
 
     event Redeem(address _sender, uint256 _value);
 
-receive() external payable {}
+    receive() external payable {}
 }

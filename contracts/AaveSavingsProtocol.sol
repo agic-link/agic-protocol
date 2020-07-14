@@ -79,6 +79,6 @@ contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
 
     event LedgerAccount(uint256 interest, uint256 serviceCharge, uint256 balance);
 
-receive() external payable {}
+    receive() external payable {}
 
 }
