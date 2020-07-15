@@ -15,10 +15,13 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
     //user => aaveContract
     mapping(address => address) _aaveContract;
 
+    address private _fundPool;
+
     //Alternative construction method
-    function initialize() public initializer {
+    function initialize(address fundPool) public initializer {
         __ERC20_init("Automatically Generate Of Interest Coin", "AGIC");
         __Ownable_init();
+        _fundPool = fundPool;
     }
 
     modifier notZeroAddress(address _to) {
@@ -91,12 +94,12 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
         address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
         AaveSavingsProtocol aave;
         if (aaveProtocolAddress == address(0)) {
-            aave = new AaveSavingsProtocol(msg.sender, _addressToPayable(owner()));
+            aave = new AaveSavingsProtocol(msg.sender, _addressToPayable(_fundPool));
             _aaveContract[msg.sender] = address(aave);
         } else {
             aave = AaveSavingsProtocol(aaveProtocolAddress);
         }
-        aave.deposit{value : eth}();
+        aave.deposit { value : eth}();
         emit Deposit(aaveProtocolAddress == address(0), eth, msg.sender);
     }
 
