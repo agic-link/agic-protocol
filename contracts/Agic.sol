@@ -33,8 +33,7 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
         _aaveContract[msg.sender] = address(0);
         uint256 agic = balanceOf(msg.sender);
         _burn(msg.sender, agic);
-        uint256 pledgeEth = agic.div(4);
-        _totalPledgeEth = _totalPledgeEth.sub(pledgeEth);
+        _totalPledgeEth = _totalPledgeEth.sub(agic.div(4));
     }
 
     function aaveProtocol(address owner) public view notZeroAddress(owner) returns (address){
@@ -121,11 +120,11 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
         uint256 agic = balanceOf(msg.sender);
         require(agic > 0, "not have pledge Eth");
         AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
-        uint256 pledgeEth = aave.getPledgeEth();
+        uint256 userPledgeEth = aave.getPledgeEth();
         aave.redeem();
-        _burn(msg.sender, pledgeEth.mul(4));
+        _burn(msg.sender, userPledgeEth.mul(4));
         uint256 eth = agic.div(4);
-        _totalPledgeEth = _totalPledgeEth.sub(pledgeEth);
+        _totalPledgeEth = _totalPledgeEth.sub(userPledgeEth);
         emit Redeem(msg.sender, eth);
     }
 

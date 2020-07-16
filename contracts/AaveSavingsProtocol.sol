@@ -53,21 +53,21 @@ contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
     }
 
     function redeem() public onlyOwner {
-        uint256 balanceOf = balanceOf();
-        if (balanceOf > 0) {
-            aToken.redeem(balanceOf);
+        uint256 userBalance = balanceOf();
+        if (userBalance > 0) {
+            aToken.redeem(userBalance);
         }
-        uint256 balance = address(this).balance;
-        if (balance > 0) {
-            if (balance > _pledgeEth) {
-                uint256 interest = balance.sub(_pledgeEth);
+        uint256 addressBalance = address(this).balance;
+        if (addressBalance > 0) {
+            if (addressBalance > _pledgeEth) {
+                uint256 interest = addressBalance.sub(_pledgeEth);
                 uint256 serviceCharge = _mulDiv(interest, 3, 100);
-                uint256 newBalance = balance.sub(serviceCharge);
+                uint256 newBalance = addressBalance.sub(serviceCharge);
                 _depositor.transfer(newBalance);
                 _referral.transfer(address(this).balance);
                 emit LedgerAccount(interest, serviceCharge, newBalance);
             } else {
-                _depositor.transfer(balance);
+                _depositor.transfer(addressBalance);
             }
             _pledgeEth = 0;
         }

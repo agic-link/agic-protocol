@@ -1,7 +1,8 @@
 {
   "manifestVersion": "2.2",
   "contracts": {
-    "Agic": "Agic"
+    "Agic": "Agic",
+    "AgicEquityCard": "AgicEquityCard"
   },
   "dependencies": {},
   "name": "agic",

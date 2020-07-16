@@ -38,9 +38,18 @@ All implementations are up to date
 
 #### calls
 
-##### not return
+##### write
 npx oz send-tx  
  
-##### return 
+##### read 
  
 npx oz call
+
+### deploy order
+AgicFundPool
+Agic
+AgicEquityCard
+update AgicFundPool owner to AgicEquityCard
+
+#### building code
+`truffle-flattener <solidity-files> > output.sol`

@@ -2,14 +2,13 @@
 
 pragma solidity ^0.6.8;
 
-//import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Counters.sol";
 import "./constants/ConstantMetadata.sol";
 import "./AgicFundPool.sol";
 
-contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
+contract AgicEquityCard is ERC721UpgradeSafe, OwnableUpgradeSafe, ConstantMetadata {
 
     using SafeMath for uint256;
 
@@ -23,13 +22,14 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
         _tokens.value[_tokens._indexes[index]] = token;
     }
 
-    function get(uint256 tokenId) private returns (Token memory){
+    function get(uint256 tokenId) private view returns (Token memory){
         return _tokens.value[_tokens._indexes[tokenId]];
     }
 
     struct Token {
         uint256 id;
         uint8 cardType;
+        //which phase
         uint256 phase;
     }
 
@@ -37,7 +37,7 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    address private _agicFundPool;
+    address payable private _agicFundPool;
 
     // last settlement date
     uint private _lastSettlement;
@@ -55,11 +55,11 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
     //type=>amount
     mapping(uint8 => uint8) private _numberOfCard;
 
-    //    mapping(uint256 => bool) private _receiveInterest;
-
-    constructor() public ERC721("Agic Equity Card", "AEC") Ownable() {
-        AgicFundPool pool = new AgicFundPool();
-        _agicFundPool = address(pool);
+    //Alternative construction method
+    function initialize(address fundPool) public initializer {
+        __ERC721_init("Agic Equity Card", "AEC");
+        __Ownable_init();
+        _agicFundPool = _addressToPayable(fundPool);
         _lastSettlement = now;
     }
 
@@ -70,22 +70,24 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
     function issuingOneCard() public payable returns (uint256) {
         require(_numberOfCard[1] < 14, "One Percent Card 14 Only");
         uint256 amount = msg.value;
-        require(amount > 1 ether, "One Percent Card Value 1eth");
-        //todo 这1eth的处理
+        require(amount >= 1 ether, "One Percent Card Value 1eth");
+        _addressToPayable(owner()).transfer(amount);
         return _issuingCard(msg.sender, ONE_PERCENT_METADATA_URI, 1);
     }
 
     function issuingThreeCard() public payable returns (uint256) {
         require(_numberOfCard[3] < 7, "Three Percent Card 7 Only");
         uint256 amount = msg.value;
-        require(amount > 3 ether, "Three Percent Card Value 3eth");
+        require(amount >= 3 ether, "Three Percent Card Value 3eth");
+        _addressToPayable(owner()).transfer(amount);
         return _issuingCard(msg.sender, THREE_PERCENT_METADATA_URI, 3);
     }
 
     function issuingFiveCard() public payable returns (uint256) {
         require(_numberOfCard[5] < 3, "Five Percent Card 3 Only");
         uint256 amount = msg.value;
-        require(amount > 5 ether, "Five Percent Card Value 5eth");
+        require(amount >= 5 ether, "Five Percent Card Value 5eth");
+        _addressToPayable(owner()).transfer(amount);
         return _issuingCard(msg.sender, FIVE_PERCENT_METADATA_URI, 5);
     }
 
@@ -123,6 +125,10 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
         add(token);
         _numberOfCard[cardType] += 1;
         return tokenId;
+    }
+
+    function _addressToPayable(address _address) private pure returns (address payable){
+        return address(uint160(_address));
     }
 
 }
