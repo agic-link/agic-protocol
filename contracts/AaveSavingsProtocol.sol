@@ -2,14 +2,14 @@
 
 pragma solidity ^0.6.8;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./constants/ConstantAddresses.sol";
 import "./aave/ILendingPool.sol";
 import "./aave/ILendingPoolAddressesProvider.sol";
 import "./aave/IAToken.sol";
 
-contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
+contract AaveSavingsProtocol is ConstantAddresses, Ownable {
 
     using SafeMath for uint256;
 
@@ -24,10 +24,9 @@ contract AaveSavingsProtocol is ConstantAddresses, OwnableUpgradeSafe {
 
     uint256 private _pledgeEth;
 
-    constructor(address payable depositor, address payable referral) public {
+    constructor(address payable depositor, address payable referral) public Ownable() {
         _depositor = depositor;
         _referral = referral;
-        __Ownable_init();
     }
 
     function deposit() public payable onlyOwner {

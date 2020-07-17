@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.8;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 
-contract AgicFundPool is OwnableUpgradeSafe {
+contract AgicFundPool is Ownable {
 
     using SafeMath for uint256;
 
     uint256 private _thisAccountPeriodAmount;
 
-    constructor() public {
-        __Ownable_init();
-    }
+    constructor() public Ownable(){}
 
     function getThisAccountPeriodAmount() public view returns (uint256){
         return _thisAccountPeriodAmount;
@@ -28,6 +26,6 @@ contract AgicFundPool is OwnableUpgradeSafe {
     }
 
     receive() external payable {
-        _thisAccountPeriodAmount = _thisAccountPeriodAmount.add(msg.value);
+      _thisAccountPeriodAmount = _thisAccountPeriodAmount.add(msg.value);
     }
 }

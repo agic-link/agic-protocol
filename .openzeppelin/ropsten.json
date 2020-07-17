@@ -722,27 +722,23 @@
   "proxies": {
     "agic/Agic": [
       {
-        "address": "0xd91F96035Ee446917eA020Fc2d96cD6f2162bf56",
-        "version": "1.0.0",
-        "implementation": "0x8b9D33Bd628c313B72ba6C81A5F358959Fb89EAD",
-        "admin": "0x2046f2F0392430498dd768E3bA3C8270853F3d50",
-        "kind": "Upgradeable"
+        "address": "0xc8a2f326961b7ed99914c95350427df78db524e6",
+        "kind": "NonProxy",
+        "bytecodeHash": "52fd140a714e922af3dd1ec7406142025f50d86957ac3ed47818f36d60f80cc3"
       }
     ],
     "agic/AgicFundPool": [
       {
-        "address": "0x6f93ed39b3ec8a20501ac1922d85c70c4a24bff3",
+        "address": "0x5F55c90A23dcaA17173349b7151EC509a8197E30",
         "kind": "NonProxy",
-        "bytecodeHash": "1e5d89a4ae783f03d4c98f4e037ccd3e4e6f6c6e5803e517db6030df4a075010"
+        "bytecodeHash": "d1a943a30898ae7cf85b6d11d664c89216f90c9f804085ea2dc8f35c33757962"
       }
     ],
     "agic/AgicEquityCard": [
       {
-        "address": "0x36C4B51785659bB8c82329863016A9591C415823",
-        "version": "1.0.0",
-        "implementation": "0x7b98d78607db43210Fd29623a4265Ce02170C353",
-        "admin": "0x2046f2F0392430498dd768E3bA3C8270853F3d50",
-        "kind": "Upgradeable"
+        "address": "0xC1291a9aD675D4E3Cc1e9b7A7958d9FC123ff9E8",
+        "kind": "NonProxy",
+        "bytecodeHash": "d1a943a30898ae7cf85b6d11d664c89216f90c9f804085ea2dc8f35c33757962"
       }
     ]
   },

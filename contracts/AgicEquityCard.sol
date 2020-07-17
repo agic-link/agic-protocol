@@ -2,13 +2,14 @@
 
 pragma solidity ^0.6.8;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "./constants/ConstantMetadata.sol";
 import "./AgicFundPool.sol";
+import "./interface/IAgicAddressesProvider.sol";
 
-contract AgicEquityCard is ERC721UpgradeSafe, OwnableUpgradeSafe, ConstantMetadata {
+contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
 
     using SafeMath for uint256;
 
@@ -37,8 +38,6 @@ contract AgicEquityCard is ERC721UpgradeSafe, OwnableUpgradeSafe, ConstantMetada
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    address payable private _agicFundPool;
-
     // last settlement date
     uint private _lastSettlement;
 
@@ -49,23 +48,17 @@ contract AgicEquityCard is ERC721UpgradeSafe, OwnableUpgradeSafe, ConstantMetada
     //type=>interest
     mapping(uint8 => uint256) private _cardInterest;
 
-    //tokenId=>type
-    //    mapping(uint256 => uint8) private _cardType;
-
     //type=>amount
     mapping(uint8 => uint8) private _numberOfCard;
 
-    //Alternative construction method
-    function initialize(address fundPool) public initializer {
-        __ERC721_init("Agic Equity Card", "AEC");
-        __Ownable_init();
-        _agicFundPool = _addressToPayable(fundPool);
+    IAgicAddressesProvider private provider;
+
+    constructor (address agicAddressesProvider) public ERC721("Agic Equity Card", "AEC") Ownable() {
+        provider = IAgicAddressesProvider(agicAddressesProvider);
         _lastSettlement = now;
     }
 
-    function getAgicFundPoolAddress() public view returns (address){
-        return _agicFundPool;
-    }
+    //todo 如果更新card移交pool权限
 
     function issuingOneCard() public payable returns (uint256) {
         require(_numberOfCard[1] < 14, "One Percent Card 14 Only");
@@ -95,7 +88,7 @@ contract AgicEquityCard is ERC721UpgradeSafe, OwnableUpgradeSafe, ConstantMetada
     function settlement() public onlyOwner {
         require(_lastSettlement + 30 days > now, "Only one settlement per month");
         _lastSettlement = now;
-        AgicFundPool pool = AgicFundPool(_agicFundPool);
+        AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
         uint256 thisAccountPeriodAmount = pool.getThisAccountPeriodAmount();
         pool.afterSettlement();
         _cardInterest[5] = thisAccountPeriodAmount.mul(5).div(100);
@@ -112,7 +105,7 @@ contract AgicEquityCard is ERC721UpgradeSafe, OwnableUpgradeSafe, ConstantMetada
         uint256 interest = _cardInterest[token.cardType];
         require(interest > 0, "No interest.");
         _tokens.value[tokenId].phase = _tokens.value[tokenId].phase.add(1);
-        AgicFundPool pool = AgicFundPool(_agicFundPool);
+        AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
         pool._transfer(interest, msg.sender);
     }
 

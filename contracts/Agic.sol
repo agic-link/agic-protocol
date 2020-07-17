@@ -2,11 +2,12 @@
 
 pragma solidity ^0.6.8;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./AaveSavingsProtocol.sol";
+import "./interface/IAgicAddressesProvider.sol";
 
-contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
+contract Agic is ERC20, Ownable {
 
     using SafeMath for uint256;
 
@@ -15,13 +16,12 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
     //user => aaveContract
     mapping(address => address) _aaveContract;
 
-    address private _fundPool;
+    address private _agicAddressesProvider;
 
-    //Alternative construction method
-    function initialize(address fundPool) public initializer {
-        __ERC20_init("Automatically Generate Of Interest Coin", "AGIC");
-        __Ownable_init();
-        _fundPool = fundPool;
+    IAgicAddressesProvider private provider;
+
+    constructor (address agicAddressesProvider) public ERC20("Automatically Generate Of Interest Coin", "AGIC") Ownable(){
+        provider = IAgicAddressesProvider(agicAddressesProvider);
     }
 
     modifier notZeroAddress(address _to) {
@@ -40,7 +40,7 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
         return _aaveContract[owner];
     }
 
-    function balanceOf(address owner) public view override(ERC20UpgradeSafe) notZeroAddress(owner) returns (uint256){
+    function balanceOf(address owner) public view override(ERC20) notZeroAddress(owner) returns (uint256){
         return _ethOfAave(owner).mul(4);
     }
 
@@ -54,7 +54,7 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
         }
     }
 
-    function _transfer(address sender, address recipient, uint256 amount) internal override(ERC20UpgradeSafe) {
+    function _transfer(address sender, address recipient, uint256 amount) internal override(ERC20) {
         require(amount > 0, "Transferred amount needs to be greater than zero");
         require(balanceOf(sender) > amount, "ERC20: transfer amount exceeds balance");
         uint256 eth = amount.div(4);
@@ -93,7 +93,7 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
         address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
         AaveSavingsProtocol aave;
         if (aaveProtocolAddress == address(0)) {
-            aave = new AaveSavingsProtocol(msg.sender, _addressToPayable(_fundPool));
+            aave = new AaveSavingsProtocol(msg.sender, _addressToPayable(provider.getAgicFundPool()));
             _aaveContract[msg.sender] = address(aave);
         } else {
             aave = AaveSavingsProtocol(aaveProtocolAddress);
@@ -136,5 +136,4 @@ contract Agic is ERC20UpgradeSafe, OwnableUpgradeSafe {
 
     event Redeem(address _sender, uint256 _value);
 
-    receive() external payable {}
 }
