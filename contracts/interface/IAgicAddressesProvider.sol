@@ -9,7 +9,13 @@ pragma solidity ^0.6.8;
 
 interface IAgicAddressesProvider {
 
-    //todo 添加pool白名单
+    function getAgicFundPoolWhiteList() external view returns (address[] memory);
+
+    function verifyFundPoolWhiteList(address) external view returns (bool);
+
+    function addAgicFundPoolWhiteList(address) external;
+
+    function subAgicFundPoolWhiteList(address) external;
 
     function getAgicFundPool() external view returns (address payable);
 

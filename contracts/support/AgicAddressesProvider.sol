@@ -19,6 +19,32 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
 
     address private _extendAddressesProvider;
 
+    mapping(address => uint256) private _whiteListIndex;
+
+    address[] _whiteList;
+
+    function getAgicFundPoolWhiteList() public view override returns (address[] memory){
+        return _whiteList;
+    }
+
+    function verifyFundPoolWhiteList(address aecAddress) override public view returns (bool){
+        return _whiteListIndex[aecAddress] != 0;
+    }
+
+    function addAgicFundPoolWhiteList(address aecAddress) public override onlyOwner {
+        _whiteListIndex[aecAddress] = _whiteList.length;
+        _whiteList.push(aecAddress);
+    }
+
+    function subAgicFundPoolWhiteList(address aecAddress) public override onlyOwner {
+        uint256 index = _whiteListIndex[aecAddress];
+        if (index != 0) {
+            delete _whiteList[index];
+            delete _whiteListIndex[aecAddress];
+            _whiteListIndex.pop();
+        }
+    }
+
     function getAgicFundPool() public view override returns (address payable){
         return _agicFundPool;
     }
@@ -52,6 +78,5 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
     function setExtendAddressesProvider(address extend) public override onlyOwner {
         _extendAddressesProvider = extend;
     }
-
 
 }

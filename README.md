@@ -1,33 +1,33 @@
-### using 
+## using 
 - truffle
 - openzeppelin/cli
 - openzeppelin/contracts
 
-### run step
+## run step
 
+#### [dev] run
+`ganache-cli`
+
+-----
 
 ``` shell
 npx oz compile [--optimizer on]
-
 npx oz deploy
-
 ```
 
-#### calls
+## calls
 
-##### write
-npx oz send-tx  
- 
-##### read 
- 
-npx oz call
+#### write
+`npx oz send-tx`
+#### read 
+`npx oz call`
+## deploy order
+1. AgicAddressesProvider
+2. AgicFundPool
+3. Agic
+4. AgicEquityCard
+5. add AgicEquityCard address to AgicAddressesProvider._whiteList
 
-### deploy order
-AgicFundPool
-Agic
-AgicEquityCard
-update AgicFundPool owner to AgicEquityCard
-
-#### building code
+## building full code
 `truffle-flattener <solidity-files> > output.sol`
 

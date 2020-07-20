@@ -58,8 +58,6 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
         _lastSettlement = now;
     }
 
-    //todo 如果更新card移交pool权限
-
     function issuingOneCard() public payable returns (uint256) {
         require(_numberOfCard[1] < 14, "One Percent Card 14 Only");
         uint256 amount = msg.value;
