@@ -83,8 +83,7 @@ contract Agic is ERC20, Ownable {
         return _totalPledgeEth;
     }
 
-    /// @dev Pledge eth in exchange for AGIC
-    //质押的eth换成agic
+    //Pledge eth in exchange for AGIC
     function deposit() public payable {
         uint256 eth = msg.value;
         uint256 agic = eth.mul(4);
@@ -102,7 +101,7 @@ contract Agic is ERC20, Ownable {
         emit Deposit(aaveProtocolAddress == address(0), eth, msg.sender);
     }
 
-    //get 当前赚取的利息
+    //Current interest earned
     function interestAmount() public view returns (uint256){
         address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
         if (aaveProtocolAddress == address(0)) {
@@ -113,7 +112,7 @@ contract Agic is ERC20, Ownable {
         }
     }
 
-    //赎回全部eth并获得利息
+    //Take out all pledge ETH
     function redeem() public {
         address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
         require(aaveProtocolAddress != address(0), "not have protocol");

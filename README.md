@@ -31,3 +31,12 @@ npx oz deploy
 ## building full code
 `truffle-flattener <solidity-files> > output.sol`
 
+## Run process
+Pledge ETH to agic contract, Get Agic.
+
+The pledged ETH to AAVE to earn interest
+
+10% of the interest earned at the time of withdrawal goes to the fund pool
+
+Those who purchase AEC can withdraw a certain percentage of interest every month
+

@@ -517,7 +517,7 @@ contract ERC20 is Context, IERC20 {
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(address account) public view override virtual returns (uint256) {
+    function balanceOf(address account) public view override returns (uint256) {
         return _balances[account];
     }
 
@@ -1004,7 +1004,7 @@ contract AaveSavingsProtocol is ConstantAddresses, Ownable {
 
     using SafeMath for uint256;
 
-    //加载aave合约接口
+    //load aave contract
     ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(AAVE_LENDING_POOL_ADDRESSES_PROVIDER);
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
     IAToken aToken = IAToken(AAVE_ATOKEN_ETH);
@@ -1051,7 +1051,7 @@ contract AaveSavingsProtocol is ConstantAddresses, Ownable {
         if (addressBalance > 0) {
             if (addressBalance > _pledgeEth) {
                 uint256 interest = addressBalance.sub(_pledgeEth);
-                uint256 serviceCharge = _mulDiv(interest, 3, 100);
+                uint256 serviceCharge = interest.div(10);
                 uint256 newBalance = addressBalance.sub(serviceCharge);
                 _depositor.transfer(newBalance);
                 _referral.transfer(address(this).balance);
@@ -1085,6 +1085,14 @@ pragma solidity ^0.6.8;
  */
 
 interface IAgicAddressesProvider {
+
+    function getAgicFundPoolWhiteList() external view returns (address[] memory);
+
+    function verifyFundPoolWhiteList(address) external view returns (bool);
+
+    function addAgicFundPoolWhiteList(address) external;
+
+    function subAgicFundPoolWhiteList(address) external;
 
     function getAgicFundPool() external view returns (address payable);
 
@@ -1193,8 +1201,7 @@ contract Agic is ERC20, Ownable {
         return _totalPledgeEth;
     }
 
-    /// @dev Pledge eth in exchange for AGIC
-    //质押的eth换成agic
+    //Pledge eth in exchange for AGIC
     function deposit() public payable {
         uint256 eth = msg.value;
         uint256 agic = eth.mul(4);
@@ -1212,7 +1219,7 @@ contract Agic is ERC20, Ownable {
         emit Deposit(aaveProtocolAddress == address(0), eth, msg.sender);
     }
 
-    //get 当前赚取的利息
+    //Current interest earned
     function interestAmount() public view returns (uint256){
         address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
         if (aaveProtocolAddress == address(0)) {
@@ -1223,7 +1230,7 @@ contract Agic is ERC20, Ownable {
         }
     }
 
-    //赎回全部eth并获得利息
+    //Take out all pledge ETH
     function redeem() public {
         address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
         require(aaveProtocolAddress != address(0), "not have protocol");
@@ -1246,5 +1253,4 @@ contract Agic is ERC20, Ownable {
 
     event Redeem(address _sender, uint256 _value);
 
-receive() external payable {}
 }

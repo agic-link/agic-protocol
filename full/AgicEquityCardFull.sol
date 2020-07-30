@@ -1757,39 +1757,6 @@ contract ConstantMetadata {
 
 }
 
-// File: contracts/AgicFundPool.sol
-
-
-pragma solidity ^0.6.8;
-
-
-
-
-contract AgicFundPool is Ownable {
-
-    using SafeMath for uint256;
-
-    uint256 private _thisAccountPeriodAmount;
-
-    constructor() public Ownable(){}
-
-    function getThisAccountPeriodAmount() public view returns (uint256){
-        return _thisAccountPeriodAmount;
-    }
-
-    function afterSettlement() public onlyOwner {
-        _thisAccountPeriodAmount = 0;
-    }
-
-    function _transfer(uint256 amount, address payable to) public payable onlyOwner {
-        to.transfer(amount);
-    }
-
-    receive() external payable {
-      _thisAccountPeriodAmount = _thisAccountPeriodAmount.add(msg.value);
-    }
-}
-
 // File: contracts/interface/IAgicAddressesProvider.sol
 
 
@@ -1802,6 +1769,14 @@ pragma solidity ^0.6.8;
  */
 
 interface IAgicAddressesProvider {
+
+    function getAgicFundPoolWhiteList() external view returns (address[] memory);
+
+    function verifyFundPoolWhiteList(address) external view returns (bool);
+
+    function addAgicFundPoolWhiteList(address) external;
+
+    function subAgicFundPoolWhiteList(address) external;
 
     function getAgicFundPool() external view returns (address payable);
 
@@ -1822,6 +1797,49 @@ interface IAgicAddressesProvider {
     function setExtendAddressesProvider(address extend) external;
 
 
+}
+
+// File: contracts/AgicFundPool.sol
+
+
+pragma solidity ^0.6.8;
+
+
+
+
+
+contract AgicFundPool {
+
+    using SafeMath for uint256;
+
+    uint256 private _thisAccountPeriodAmount;
+
+    IAgicAddressesProvider private provider;
+
+    constructor(address agicAddressesProvider) public {
+        provider = IAgicAddressesProvider(agicAddressesProvider);
+    }
+
+    modifier inWhiteList(address _send){
+        require(provider.verifyFundPoolWhiteList(_send), "This is not an address in the whitelist");
+        _;
+    }
+
+    function getThisAccountPeriodAmount() public view returns (uint256){
+        return _thisAccountPeriodAmount;
+    }
+
+    function afterSettlement() public inWhiteList(msg.sender) {
+        _thisAccountPeriodAmount = 0;
+    }
+
+    function _transfer(uint256 amount, address payable to) public payable inWhiteList(msg.sender) {
+        to.transfer(amount);
+    }
+
+    receive() external payable {
+        _thisAccountPeriodAmount = _thisAccountPeriodAmount.add(msg.value);
+    }
 }
 
 // File: contracts/AgicEquityCard.sol

@@ -13,7 +13,7 @@ contract AaveSavingsProtocol is ConstantAddresses, Ownable {
 
     using SafeMath for uint256;
 
-    //加载aave合约接口
+    //load aave contract
     ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(AAVE_LENDING_POOL_ADDRESSES_PROVIDER);
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
     IAToken aToken = IAToken(AAVE_ATOKEN_ETH);
@@ -60,7 +60,7 @@ contract AaveSavingsProtocol is ConstantAddresses, Ownable {
         if (addressBalance > 0) {
             if (addressBalance > _pledgeEth) {
                 uint256 interest = addressBalance.sub(_pledgeEth);
-                uint256 serviceCharge = _mulDiv(interest, 3, 100);
+                uint256 serviceCharge = interest.div(10);
                 uint256 newBalance = addressBalance.sub(serviceCharge);
                 _depositor.transfer(newBalance);
                 _referral.transfer(address(this).balance);

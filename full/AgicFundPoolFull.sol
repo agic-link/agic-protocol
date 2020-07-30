@@ -258,6 +258,48 @@ contract Ownable is Context {
     }
 }
 
+// File: contracts/interface/IAgicAddressesProvider.sol
+
+
+
+pragma solidity ^0.6.8;
+
+/**
+@title AgicAddressesProvider interface
+@notice provides the interface to fetch the Agic address
+ */
+
+interface IAgicAddressesProvider {
+
+    function getAgicFundPoolWhiteList() external view returns (address[] memory);
+
+    function verifyFundPoolWhiteList(address) external view returns (bool);
+
+    function addAgicFundPoolWhiteList(address) external;
+
+    function subAgicFundPoolWhiteList(address) external;
+
+    function getAgicFundPool() external view returns (address payable);
+
+    function setAgicFundPool(address payable pool) external;
+
+    function getAgic() external view returns (address);
+
+    function setAgic(address agic) external;
+
+    function getAgicEquityCard() external view returns (address);
+
+    function setAgicEquityCard(address agicEquityCard) external;
+
+    //Not used yet
+    function getExtendAddressesProvider() external view returns (address);
+
+    //Not used yet
+    function setExtendAddressesProvider(address extend) external;
+
+
+}
+
 // File: contracts/AgicFundPool.sol
 
 
@@ -266,27 +308,37 @@ pragma solidity ^0.6.8;
 
 
 
-contract AgicFundPool is Ownable {
+
+contract AgicFundPool {
 
     using SafeMath for uint256;
 
     uint256 private _thisAccountPeriodAmount;
 
-    constructor() public Ownable(){}
+    IAgicAddressesProvider private provider;
+
+    constructor(address agicAddressesProvider) public {
+        provider = IAgicAddressesProvider(agicAddressesProvider);
+    }
+
+    modifier inWhiteList(address _send){
+        require(provider.verifyFundPoolWhiteList(_send), "This is not an address in the whitelist");
+        _;
+    }
 
     function getThisAccountPeriodAmount() public view returns (uint256){
         return _thisAccountPeriodAmount;
     }
 
-    function afterSettlement() public onlyOwner {
+    function afterSettlement() public inWhiteList(msg.sender) {
         _thisAccountPeriodAmount = 0;
     }
 
-    function _transfer(uint256 amount, address payable to) public payable onlyOwner {
+    function _transfer(uint256 amount, address payable to) public payable inWhiteList(msg.sender) {
         to.transfer(amount);
     }
 
     receive() external payable {
-      _thisAccountPeriodAmount = _thisAccountPeriodAmount.add(msg.value);
+        _thisAccountPeriodAmount = _thisAccountPeriodAmount.add(msg.value);
     }
 }
