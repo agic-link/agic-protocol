@@ -1063,10 +1063,6 @@ contract AaveSavingsProtocol is ConstantAddresses, Ownable {
         }
     }
 
-    function _mulDiv(uint256 a, uint256 b, uint256 c) private pure returns (uint256){
-        return a.mul(c).div(b);
-    }
-
     event LedgerAccount(uint256 interest, uint256 serviceCharge, uint256 balance);
 
     receive() external payable {}
