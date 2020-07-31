@@ -162,7 +162,11 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
 
     mapping(address => uint256) private _whiteListIndex;
 
-    address[] _whiteList;
+    address[] private _whiteList;
+
+    constructor() public {
+        _whiteList.push(address(0));
+    }
 
     function getAgicFundPoolWhiteList() public view override returns (address[] memory){
         return _whiteList;
@@ -182,7 +186,7 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
         if (index != 0) {
             delete _whiteList[index];
             delete _whiteListIndex[aecAddress];
-            _whiteListIndex.pop();
+            _whiteList.pop();
         }
     }
 
