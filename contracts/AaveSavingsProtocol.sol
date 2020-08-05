@@ -22,8 +22,6 @@ contract AaveSavingsProtocol is ConstantAddresses, Ownable {
 
     address payable private _referral;
 
-    uint256 private _pledgeEth;
-
     constructor(address payable depositor, address payable referral) public Ownable() {
         _depositor = depositor;
         _referral = referral;
@@ -31,7 +29,6 @@ contract AaveSavingsProtocol is ConstantAddresses, Ownable {
 
     function deposit() public payable onlyOwner {
         uint256 amount = msg.value;
-        _pledgeEth = _pledgeEth.add(amount);
         lendingPool.deposit { value : amount} (AAVE_MARKET_ETH, amount, 0);
     }
 
@@ -43,36 +40,15 @@ contract AaveSavingsProtocol is ConstantAddresses, Ownable {
         return aToken.transfer(recipient, amount);
     }
 
-    function interestAmount() public view onlyOwner returns (uint256){
-        return balanceOf().sub(_pledgeEth);
-    }
-
-    function getPledgeEth() public view onlyOwner returns (uint256){
-        return _pledgeEth;
-    }
-
-    function redeem() public onlyOwner {
-        uint256 userBalance = balanceOf();
-        if (userBalance > 0) {
-            aToken.redeem(userBalance);
-        }
+    function redeem(uint256 eth, uint256 serviceCharge) public onlyOwner {
+        aToken.redeem(eth);
         uint256 addressBalance = address(this).balance;
-        if (addressBalance > 0) {
-            if (addressBalance > _pledgeEth) {
-                uint256 interest = addressBalance.sub(_pledgeEth);
-                uint256 serviceCharge = interest.div(10);
-                uint256 newBalance = addressBalance.sub(serviceCharge);
-                _depositor.transfer(newBalance);
-                _referral.transfer(address(this).balance);
-                emit LedgerAccount(interest, serviceCharge, newBalance);
-            } else {
-                _depositor.transfer(addressBalance);
-            }
-            _pledgeEth = 0;
+        uint256 newBalance = addressBalance.sub(serviceCharge);
+        _depositor.transfer(newBalance);
+        if (serviceCharge > 0) {
+            _referral.transfer(address(this).balance);
         }
     }
-
-    event LedgerAccount(uint256 interest, uint256 serviceCharge, uint256 balance);
 
     receive() external payable {}
 

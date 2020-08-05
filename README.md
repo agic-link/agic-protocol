@@ -40,3 +40,9 @@ The pledged ETH to AAVE to earn interest
 
 Those who purchase AEC can withdraw a certain percentage of interest every month
 
+## Ropsten Address 
+- AgicAddressesProvider: [0x58237b0b0233b5b14057a3a6e5f83989bb9ce7f6]
+- AgicFundPool: [0xe0E882224F49fa78D5f0a0DBe2C1BDd80a7ebA03]
+- Agic: [0xd02f130f7013f41cb50a2f170263a6d008d1d6ca]
+- AgicEquityCard: [0xf59b61be952db69ab18ab29e32857420c62239b6]
+
