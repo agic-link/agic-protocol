@@ -16,7 +16,7 @@ contract Agic is ERC20, Ownable {
     mapping(address => uint256) private _pledgeEth;
 
     //user => aaveContract
-    mapping(address => address) _aaveContract;
+    mapping(address => address) private _aaveContract;
 
     address private _agicAddressesProvider;
 
@@ -31,13 +31,6 @@ contract Agic is ERC20, Ownable {
         _;
     }
 
-    function invalidAaveProtocol() public {
-        _aaveContract[msg.sender] = address(0);
-        uint256 agic = balanceOf(msg.sender);
-        _burn(msg.sender, agic);
-        _totalPledgeEth = _totalPledgeEth.sub(agic.div(4));
-    }
-
     function aaveProtocol(address owner) public view notZeroAddress(owner) returns (address){
         return _aaveContract[owner];
     }
@@ -50,22 +43,24 @@ contract Agic is ERC20, Ownable {
         return _pledgeEth[owner];
     }
 
-    function _transfer(address sender, address recipient, uint256 amount) internal override(ERC20) {
+    function _transfer(address from, address to, uint256 amount) internal override(ERC20) {
         require(amount > 0, "Transferred amount needs to be greater than zero");
-        uint256 balance = balanceOf(sender);
+        uint256 balance = balanceOf(from);
         require(balance > amount, "ERC20: transfer amount exceeds balance");
 
         //计算本次交易是余额的比例
         uint256 percentage = _percentage(amount, balance);
         //计算本次减少质押eth的量
-        uint256 subPledgeEth = _takePercentage(_pledgeEth[sender], percentage);
-        _pledgeEth[sender] = _pledgeEth[sender].sub(subPledgeEth);
-        _pledgeEth[recipient]=_pledgeEth[recipient].add(subPledgeEth);
+        uint256 subPledgeEth = _takePercentage(_pledgeEth[from], percentage);
+        _pledgeEth[from] = _pledgeEth[from].sub(subPledgeEth);
+        _pledgeEth[to] = _pledgeEth[to].add(subPledgeEth);
 
         uint256 eth = amount.div(4);
-        AaveSavingsProtocol aave = _getAaveProtocol(sender);
-        aave.transfer(recipient, eth);
-        super._transfer(sender, recipient, amount);
+        AaveSavingsProtocol fromAave = _getAaveProtocol(from);
+        //查找接收者的合约，没有就创建
+        AaveSavingsProtocol toAave = _getOrNewAaveProtocol(_addressToPayable(to));
+        fromAave.transfer(address(toAave), eth);
+        super._transfer(from, to, amount);
     }
 
     function _ethOfAave(address owner) private view returns (uint256){
@@ -84,6 +79,18 @@ contract Agic is ERC20, Ownable {
         return AaveSavingsProtocol(aaveProtocolAddress);
     }
 
+    function _getOrNewAaveProtocol(address payable _owner) private returns (AaveSavingsProtocol){
+        AaveSavingsProtocol aave;
+        address payable aaveProtocolAddress = _addressToPayable(_aaveContract[_owner]);
+        if (aaveProtocolAddress == address(0)) {
+            aave = new AaveSavingsProtocol(_owner, _addressToPayable(provider.getAgicFundPool()));
+            _aaveContract[_owner] = address(aave);
+        } else {
+            aave = AaveSavingsProtocol(aaveProtocolAddress);
+        }
+        return aave;
+    }
+
     function totalPledgeEth() public view returns (uint256){
         return _totalPledgeEth;
     }
@@ -95,30 +102,23 @@ contract Agic is ERC20, Ownable {
         _totalPledgeEth = _totalPledgeEth.add(eth);
         _pledgeEth[msg.sender] = _pledgeEth[msg.sender].add(eth);
         super._mint(msg.sender, agic);
-        address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
-        AaveSavingsProtocol aave;
-        if (aaveProtocolAddress == address(0)) {
-            aave = new AaveSavingsProtocol(msg.sender, _addressToPayable(provider.getAgicFundPool()));
-            _aaveContract[msg.sender] = address(aave);
-        } else {
-            aave = AaveSavingsProtocol(aaveProtocolAddress);
-        }
+        AaveSavingsProtocol aave = _getOrNewAaveProtocol(msg.sender);
         aave.deposit { value : eth}();
-        emit Deposit(aaveProtocolAddress == address(0), eth, msg.sender);
+        emit Deposit(eth, msg.sender);
     }
 
     //Current interest earned
-    function interestAmount() public view returns (uint256){
-        return _interestAmount().mul(4).mul(90).div(100);
+    function interestAmount(address owner) public view notZeroAddress(owner) returns (uint256){
+        return _interestAmount(owner).mul(4).mul(90).div(100);
     }
 
-    function _interestAmount() public view returns (uint256){
-        address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
+    function _interestAmount(address owner) private view returns (uint256){
+        address payable aaveProtocolAddress = _addressToPayable(_aaveContract[owner]);
         if (aaveProtocolAddress == address(0)) {
             return 0;
         } else {
             AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
-            return aave.balanceOf().sub(_pledgeEth[msg.sender]);
+            return aave.balanceOf().sub(_pledgeEth[owner]);
         }
     }
 
@@ -134,23 +134,17 @@ contract Agic is ERC20, Ownable {
         uint256 userEth = _ethOfAave(msg.sender);
         //这次提取的agic相当于多少eth
         uint256 thisEth = agic.div(4);
-
-        //总利息
-        uint256 interest;
-        //根据比例的这次利息
-        uint256 thisInterest;
-        //服务费
-        uint256 serviceCharge;
+        require(userEth >= thisEth, "Not so much pledge Eth");
 
         /// @dev 40% = 40000000, 0.01%=10000
         // 计算出本次提取的eth占总质押量的百分比
         uint256 percentage = _percentage(thisEth, userEth);
-        if (percentage > 0) {
-            interest = _interestAmount();
-            thisInterest = _takePercentage(interest, percentage);
-            serviceCharge = thisInterest.div(10);
-        }
-
+        //总利息
+        uint256 interest = _interestAmount(msg.sender);
+        //根据比例的这次利息
+        uint256 thisInterest = _takePercentage(interest, percentage);
+        //服务费
+        uint256 serviceCharge = thisInterest.div(10);
         //加上服务费的总提取额
         uint256 redeemAmount = thisEth.add(serviceCharge);
 
@@ -161,17 +155,20 @@ contract Agic is ERC20, Ownable {
             if (redeemAmount > userEth) {
                 redeemAmount = thisEth;
             }
+            require(redeemAmount > 0, "redeemAmount < 0");
             aave.redeem(redeemAmount, serviceCharge);
         } else {
+            require(thisEth > 0, "thisEth < 0");
             aave.redeem(thisEth, 0);
         }
 
         //根据比例本次减少的质押eth
         uint256 subPledgeEth = _takePercentage(userEth, percentage);
         _pledgeEth[msg.sender] = _pledgeEth[msg.sender].sub(subPledgeEth);
+        _totalPledgeEth = _totalPledgeEth.sub(subPledgeEth);
 
         _burn(msg.sender, subPledgeEth.mul(4));
-        _totalPledgeEth = _totalPledgeEth.sub(subPledgeEth);
+
         emit Redeem(msg.sender, agic, serviceCharge, subPledgeEth);
     }
 
@@ -188,7 +185,7 @@ contract Agic is ERC20, Ownable {
         return a.mul(percentage).div(1e5).add(5).div(10);
     }
 
-    event Deposit(bool _new, uint256 _value, address _sender);
+    event Deposit(uint256 _value, address _sender);
 
     event Redeem(address _owner, uint256 _agic, uint256 serviceCharge, uint256 subPledgeEth);
 

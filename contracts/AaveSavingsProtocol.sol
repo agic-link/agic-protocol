@@ -28,8 +28,7 @@ contract AaveSavingsProtocol is ConstantAddresses, Ownable {
     }
 
     function deposit() public payable onlyOwner {
-        uint256 amount = msg.value;
-        lendingPool.deposit { value : amount} (AAVE_MARKET_ETH, amount, 0);
+        lendingPool.deposit { value : msg.value} (AAVE_MARKET_ETH, msg.value, 0);
     }
 
     function balanceOf() public view onlyOwner returns (uint256){
