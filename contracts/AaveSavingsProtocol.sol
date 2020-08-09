@@ -42,6 +42,7 @@ contract AaveSavingsProtocol is ConstantAddresses, Ownable {
     function redeem(uint256 eth, uint256 serviceCharge) public onlyOwner {
         aToken.redeem(eth);
         uint256 addressBalance = address(this).balance;
+        require(addressBalance > serviceCharge, "Agic: addressBalance < serviceCharge");
         uint256 newBalance = addressBalance.sub(serviceCharge);
         _depositor.transfer(newBalance);
         if (serviceCharge > 0) {
