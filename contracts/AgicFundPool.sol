@@ -19,7 +19,7 @@ contract AgicFundPool {
     }
 
     modifier inWhiteList(address _send){
-        require(provider.verifyFundPoolWhiteList(_send), "This is not an address in the whitelist");
+        require(provider.verifyFundPoolWhiteList(_send), "AgicFundPool: This is not an address in the whitelist");
         _;
     }
 

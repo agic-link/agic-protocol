@@ -36,7 +36,7 @@ Pledge ETH to agic contract, Get Agic.
 
 The pledged ETH to AAVE to earn interest
 
-10% of the interest earned at the time of withdrawal goes to the fund pool
+If the interest is greater than 1 finney, a fee of 1 finney will be charged for each withdrawal and deposited in the fund pool
 
 Those who purchase AEC can withdraw a certain percentage of interest every month
 
