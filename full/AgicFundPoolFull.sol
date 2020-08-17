@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // File: @openzeppelin/contracts/math/SafeMath.sol
 
-
-
 pragma solidity ^0.6.0;
 
 /**
@@ -300,6 +298,23 @@ interface IAgicAddressesProvider {
 
 }
 
+// File: contracts/interface/IAgicFundPool.sol
+
+
+
+pragma solidity ^0.6.8;
+
+interface IAgicFundPool {
+
+    function getThisAccountPeriodAmount() external view returns (uint256);
+
+    function afterSettlement() external;
+
+    function _transfer(uint256 amount, address payable to) external payable;
+
+    function recordTransfer() external payable;
+}
+
 // File: contracts/AgicFundPool.sol
 
 
@@ -309,7 +324,8 @@ pragma solidity ^0.6.8;
 
 
 
-contract AgicFundPool {
+
+contract AgicFundPool is IAgicFundPool{
 
     using SafeMath for uint256;
 
@@ -322,23 +338,25 @@ contract AgicFundPool {
     }
 
     modifier inWhiteList(address _send){
-        require(provider.verifyFundPoolWhiteList(_send), "This is not an address in the whitelist");
+        require(provider.verifyFundPoolWhiteList(_send), "AgicFundPool: This is not an address in the whitelist");
         _;
     }
 
-    function getThisAccountPeriodAmount() public view returns (uint256){
+    function getThisAccountPeriodAmount() public view override returns (uint256){
         return _thisAccountPeriodAmount;
     }
 
-    function afterSettlement() public inWhiteList(msg.sender) {
+    function afterSettlement() public override inWhiteList(msg.sender) {
         _thisAccountPeriodAmount = 0;
     }
 
-    function _transfer(uint256 amount, address payable to) public payable inWhiteList(msg.sender) {
+    function _transfer(uint256 amount, address payable to) public payable override inWhiteList(msg.sender) {
         to.transfer(amount);
     }
 
-    receive() external payable {
+    function recordTransfer() public payable override {
         _thisAccountPeriodAmount = _thisAccountPeriodAmount.add(msg.value);
     }
+
+    receive() external payable {}
 }

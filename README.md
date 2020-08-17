@@ -42,7 +42,6 @@ Those who purchase AEC can withdraw a certain percentage of interest every month
 
 ## Ropsten Address 
 - AgicAddressesProvider: [0x58237b0b0233b5b14057a3a6e5f83989bb9ce7f6]
-- AgicFundPool: [0xe0E882224F49fa78D5f0a0DBe2C1BDd80a7ebA03]
-- Agic: [0x170B0A1ba2205953F9bE9f1dc11721cA1d28D289]
+- AgicFundPool: [0x4562e390eFB066D954bB487507Ce8C91d6BE1226]
+- Agic: [0x87e32F96Fc156ddCfFB36dDc854450E878e55bB2]
 - AgicEquityCard: [0xf59b61be952db69ab18ab29e32857420c62239b6]
-

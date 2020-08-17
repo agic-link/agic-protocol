@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // File: @openzeppelin/contracts/GSN/Context.sol
 
-
-
 pragma solidity ^0.6.0;
 
 /*
@@ -988,63 +986,6 @@ interface IAToken {
     function transfer(address recipient, uint256 amount) external returns (bool);
 }
 
-// File: contracts/AaveSavingsProtocol.sol
-
-
-
-pragma solidity ^0.6.8;
-
-
-
-
-
-
-
-contract AaveSavingsProtocol is ConstantAddresses, Ownable {
-
-    using SafeMath for uint256;
-
-    //load aave contract
-    ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(AAVE_LENDING_POOL_ADDRESSES_PROVIDER);
-    ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    IAToken aToken = IAToken(AAVE_ATOKEN_ETH);
-
-    address payable private _depositor;
-
-    address payable private _referral;
-
-    constructor(address payable depositor, address payable referral) public Ownable() {
-        _depositor = depositor;
-        _referral = referral;
-    }
-
-    function deposit() public payable onlyOwner {
-        lendingPool.deposit { value : msg.value} (AAVE_MARKET_ETH, msg.value, 0);
-    }
-
-    function balanceOf() public view onlyOwner returns (uint256){
-        return aToken.balanceOf(address(this));
-    }
-
-    function transfer(address recipient, uint256 amount) external returns (bool){
-        return aToken.transfer(recipient, amount);
-    }
-
-    function redeem(uint256 eth, uint256 serviceCharge) public onlyOwner {
-        aToken.redeem(eth);
-        uint256 addressBalance = address(this).balance;
-        require(addressBalance > serviceCharge, "Agic: addressBalance < serviceCharge");
-        uint256 newBalance = addressBalance.sub(serviceCharge);
-        _depositor.transfer(newBalance);
-        if (serviceCharge > 0) {
-            _referral.transfer(address(this).balance);
-        }
-    }
-
-    receive() external payable {}
-
-}
-
 // File: contracts/interface/IAgicAddressesProvider.sol
 
 
@@ -1087,6 +1028,85 @@ interface IAgicAddressesProvider {
 
 }
 
+// File: contracts/interface/IAgicFundPool.sol
+
+
+
+pragma solidity ^0.6.8;
+
+interface IAgicFundPool {
+
+    function getThisAccountPeriodAmount() external view returns (uint256);
+
+    function afterSettlement() external;
+
+    function _transfer(uint256 amount, address payable to) external payable;
+
+    function recordTransfer() external payable;
+}
+
+// File: contracts/AaveSavingsProtocol.sol
+
+
+
+pragma solidity ^0.6.8;
+
+
+
+
+
+
+
+
+
+contract AaveSavingsProtocol is ConstantAddresses, Ownable {
+
+    using SafeMath for uint256;
+
+    //load aave contract
+    ILendingPoolAddressesProvider aaveProvider = ILendingPoolAddressesProvider(AAVE_LENDING_POOL_ADDRESSES_PROVIDER);
+    ILendingPool lendingPool = ILendingPool(aaveProvider.getLendingPool());
+    IAToken aToken = IAToken(AAVE_ATOKEN_ETH);
+
+    address payable private _depositor;
+
+    IAgicAddressesProvider private _provider;
+
+    constructor(address payable depositor, address payable provider) public Ownable() {
+        _depositor = depositor;
+        _provider = IAgicAddressesProvider(provider);
+    }
+
+    function deposit() public payable onlyOwner {
+        lendingPool.deposit{value : msg.value}(AAVE_MARKET_ETH, msg.value, 0);
+    }
+
+    function balanceOf() public view onlyOwner returns (uint256){
+        return aToken.balanceOf(address(this));
+    }
+
+    function transfer(address recipient, uint256 amount) external returns (bool){
+        return aToken.transfer(recipient, amount);
+    }
+
+    function redeem(uint256 eth, uint256 serviceCharge) public onlyOwner {
+        aToken.redeem(eth);
+        uint256 addressBalance = address(this).balance;
+        require(addressBalance > 0, "Agic: not have addressBalance");
+        if (serviceCharge > 0) {
+            require(addressBalance > serviceCharge, "Agic: addressBalance < serviceCharge");
+            uint256 newBalance = addressBalance.sub(serviceCharge);
+            _depositor.transfer(newBalance);
+            IAgicFundPool(_provider.getAgicFundPool()).recordTransfer{value : address(this).balance}();
+        } else {
+            _depositor.transfer(addressBalance);
+        }
+    }
+
+    receive() external payable {}
+
+}
+
 // File: contracts/Agic.sol
 
 
@@ -1110,15 +1130,27 @@ contract Agic is ERC20, Ownable {
 
     address private _agicAddressesProvider;
 
-    IAgicAddressesProvider private provider;
+    address payable private _provider;
 
-    constructor (address agicAddressesProvider) public ERC20("Automatically Generate Of Interest Coin", "AGIC") Ownable(){
-        provider = IAgicAddressesProvider(agicAddressesProvider);
+    constructor (address payable agicAddressesProvider) public ERC20("Automatically Generate Of Interest Coin", "AGIC") Ownable(){
+        _provider = agicAddressesProvider;
     }
 
     modifier notZeroAddress(address _to) {
         require(_to != address(0), "Agic: transfer from the zero address");
         _;
+    }
+
+    function getAgicAddressesProviderAddress() public view returns (address){
+        return _provider;
+    }
+
+    function totalPledgeEth() public view returns (uint256){
+        return _totalPledgeEth;
+    }
+
+    function _getAgicAddressesProvider() private view returns (IAgicAddressesProvider){
+        return IAgicAddressesProvider(_provider);
     }
 
     function aaveProtocol(address owner) public view notZeroAddress(owner) returns (address){
@@ -1135,7 +1167,7 @@ contract Agic is ERC20, Ownable {
 
     //Current interest earned
     function interestAmount(address owner) public view notZeroAddress(owner) returns (uint256){
-        return _interestAmount(owner).mul(4);
+        return _interestAmount(owner);
     }
 
     function _interestAmount(address owner) private view returns (uint256){
@@ -1183,16 +1215,12 @@ contract Agic is ERC20, Ownable {
         AaveSavingsProtocol aave;
         address payable aaveProtocolAddress = _addressToPayable(_aaveContract[_owner]);
         if (aaveProtocolAddress == address(0)) {
-            aave = new AaveSavingsProtocol(_owner, _addressToPayable(provider.getAgicFundPool()));
+            aave = new AaveSavingsProtocol(_owner, _provider);
             _aaveContract[_owner] = address(aave);
         } else {
             aave = AaveSavingsProtocol(aaveProtocolAddress);
         }
         return aave;
-    }
-
-    function totalPledgeEth() public view returns (uint256){
-        return _totalPledgeEth;
     }
 
     //Pledge eth in exchange for AGIC
@@ -1203,7 +1231,7 @@ contract Agic is ERC20, Ownable {
         _pledgeEth[msg.sender] = _pledgeEth[msg.sender].add(eth);
         super._mint(msg.sender, agic);
         AaveSavingsProtocol aave = _getOrNewAaveProtocol(msg.sender);
-        aave.deposit { value : eth}();
+        aave.deposit {value : eth}();
         emit Deposit(eth, msg.sender);
     }
 
@@ -1228,26 +1256,25 @@ contract Agic is ERC20, Ownable {
         //加上服务费的总提取额
         uint256 redeemAmount = thisEth.add(serviceCharge);
 
-        // 计算出本次提取的eth占总余额的百分比
-        uint256 percentage = _percentage(thisEth, userEth);
-
+        uint256 userPledgeEth = _pledgeEth[msg.sender];
         //根据比例本次减少的质押eth，如果大于余额就直接去掉用户所有的，否则根据提取比例算
         uint256 subPledgeEth;
         if (redeemAmount >= userEth) {
-            subPledgeEth = _pledgeEth[msg.sender];
+            subPledgeEth = userPledgeEth;
             redeemAmount = userEth;
         } else {
-            subPledgeEth = _takePercentage(_pledgeEth[msg.sender], percentage);
-            subPledgeEth = subPledgeEth > _pledgeEth[msg.sender] ? _pledgeEth[msg.sender] : subPledgeEth;
+            // 计算出本次提取的eth占总余额的百分比
+            uint256 percentage = _percentage(redeemAmount, userEth);
+            subPledgeEth = _takePercentage(userPledgeEth, percentage);
+            subPledgeEth = subPledgeEth > userPledgeEth ? userPledgeEth : subPledgeEth;
         }
+
+        _pledgeEth[msg.sender] = userPledgeEth.sub(subPledgeEth);
+        _totalPledgeEth = _totalPledgeEth.sub(subPledgeEth);
+        _burn(msg.sender, subPledgeEth.mul(4));
 
         AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
         aave.redeem(redeemAmount, serviceCharge);
-
-        _pledgeEth[msg.sender] = _pledgeEth[msg.sender].sub(subPledgeEth);
-        _totalPledgeEth = _totalPledgeEth.sub(subPledgeEth);
-
-        _burn(msg.sender, subPledgeEth.mul(4));
 
         emit Redeem(msg.sender, agic, serviceCharge, subPledgeEth);
     }
