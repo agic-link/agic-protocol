@@ -59,32 +59,32 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
     }
 
     function issuingOneCard() public payable returns (uint256) {
-        require(_numberOfCard[1] < 14, "One Percent Card 14 Only");
+        require(_numberOfCard[1] < 14, "AEC: One Percent Card 14 Only");
         uint256 amount = msg.value;
-        require(amount >= 1 ether, "One Percent Card Value 1eth");
+        require(amount >= 1 ether, "AEC: One Percent Card Value 1eth");
         _addressToPayable(owner()).transfer(amount);
         return _issuingCard(msg.sender, ONE_PERCENT_METADATA_URI, 1);
     }
 
     function issuingThreeCard() public payable returns (uint256) {
-        require(_numberOfCard[3] < 7, "Three Percent Card 7 Only");
+        require(_numberOfCard[3] < 7, "AEC: Three Percent Card 7 Only");
         uint256 amount = msg.value;
-        require(amount >= 3 ether, "Three Percent Card Value 3eth");
+        require(amount >= 3 ether, "AEC: Three Percent Card Value 3eth");
         _addressToPayable(owner()).transfer(amount);
         return _issuingCard(msg.sender, THREE_PERCENT_METADATA_URI, 3);
     }
 
     function issuingFiveCard() public payable returns (uint256) {
-        require(_numberOfCard[5] < 3, "Five Percent Card 3 Only");
+        require(_numberOfCard[5] < 3, "AEC: Five Percent Card 3 Only");
         uint256 amount = msg.value;
-        require(amount >= 5 ether, "Five Percent Card Value 5eth");
+        require(amount >= 5 ether, "AEC: Five Percent Card Value 5eth");
         _addressToPayable(owner()).transfer(amount);
         return _issuingCard(msg.sender, FIVE_PERCENT_METADATA_URI, 5);
     }
 
     //Settlement of monthly interest distribution for each card
     function settlement() public onlyOwner {
-        require(_lastSettlement + 30 days > now, "Only one settlement per month");
+        require(_lastSettlement + 30 days > now, "AEC: Only one settlement per month");
         _lastSettlement = now;
         AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
         uint256 thisAccountPeriodAmount = pool.getThisAccountPeriodAmount();
@@ -97,11 +97,11 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
 
     function receiveInterest(uint256 tokenId) public payable {
         address tokenOwner = ownerOf(tokenId);
-        require(msg.sender == tokenOwner, "This token doesn't belong to you");
+        require(msg.sender == tokenOwner, "AEC: This token doesn't belong to you");
         Token memory token = get(tokenId);
-        require(token.phase < _phase, "The interest has been collected");
+        require(token.phase < _phase, "AEC: The interest has been collected");
         uint256 interest = _cardInterest[token.cardType];
-        require(interest > 0, "No interest.");
+        require(interest > 0, "AEC: No interest.");
         _tokens.value[tokenId].phase = _tokens.value[tokenId].phase.add(1);
         AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
         pool._transfer(interest, msg.sender);
