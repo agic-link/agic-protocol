@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // File: @openzeppelin/contracts/GSN/Context.sol
 
+
+
 pragma solidity ^0.6.0;
 
 /*
@@ -1196,16 +1198,13 @@ contract Agic is ERC20, Ownable {
         uint256 balance = balanceOf(from);
         require(balance > amount, "Agic: transfer amount exceeds balance");
 
-        //计算本次交易是余额的比例
         uint256 percentage = _percentage(amount, balance);
-        //计算本次减少质押eth的量
         uint256 subPledgeEth = _takePercentage(_pledgeEth[from], percentage);
         _pledgeEth[from] = _pledgeEth[from].sub(subPledgeEth);
         _pledgeEth[to] = _pledgeEth[to].add(subPledgeEth);
 
         uint256 eth = amount.div(4);
         AaveSavingsProtocol fromAave = _getAaveProtocol(from);
-        //查找接收者的合约，没有就创建
         AaveSavingsProtocol toAave = _getOrNewAaveProtocol(_addressToPayable(to));
         fromAave.transfer(address(toAave), eth);
         super._transfer(from, to, amount);
@@ -1239,31 +1238,23 @@ contract Agic is ERC20, Ownable {
         address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
         require(aaveProtocolAddress != address(0), "Agic: not have protocol");
 
-        //用户余额
         uint256 balance = balanceOf(msg.sender);
         require(balance >= agic, "Agic: Not so much balance");
 
-        //用户在aave的eth余额
         uint256 userEth = _ethOfAave(msg.sender);
-        //这次提取的agic相当于多少eth
         uint256 thisEth = agic.div(4);
         require(userEth >= thisEth, "Agic: Not so much pledge Eth");
 
-        //总利息（eth）
         uint256 interest = _interestAmount(msg.sender);
-        //服务费 (eth)
-        uint256 serviceCharge = interest > 1e15 ? thisEth.div(1e3) : 0;
-        //加上服务费的总提取额
+        uint256 serviceCharge = interest >= 1e15 ? interest.div(20) : 0;
         uint256 redeemAmount = thisEth.add(serviceCharge);
 
         uint256 userPledgeEth = _pledgeEth[msg.sender];
-        //根据比例本次减少的质押eth，如果大于余额就直接去掉用户所有的，否则根据提取比例算
         uint256 subPledgeEth;
         if (redeemAmount >= userEth) {
             subPledgeEth = userPledgeEth;
             redeemAmount = userEth;
         } else {
-            // 计算出本次提取的eth占总余额的百分比
             uint256 percentage = _percentage(redeemAmount, userEth);
             subPledgeEth = _takePercentage(userPledgeEth, percentage);
             subPledgeEth = subPledgeEth > userPledgeEth ? userPledgeEth : subPledgeEth;
