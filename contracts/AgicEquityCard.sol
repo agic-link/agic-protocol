@@ -29,7 +29,7 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
 
     struct Token {
         uint256 id;
-        uint8 cardType;
+        uint256 cardType;
         //which phase
         uint256 phase;
     }
@@ -58,6 +58,26 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
         _lastSettlement = now;
     }
 
+    function lastSettlement() public view returns (uint){
+        return _lastSettlement;
+    }
+
+    function receiveNextTime() public view returns (uint){
+        return _lastSettlement + 30 days;
+    }
+
+    //Receivable interest
+    function receivableAmount(uint256 tokenId) public view returns (uint256){
+        Token memory token = get(tokenId);
+        AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
+
+        if (token.lastCollectionTime + 30 days > now) {
+            return pool.getThisAccountPeriodAmount().mul(token.cardType).div(100);
+        } else {
+            return pool.getLastAccountPeriodAmount().mul(token.cardType).div(100);
+        }
+    }
+
     function issuingOneCard() public payable returns (uint256) {
         require(_numberOfCard[1] < 14, "AEC: One Percent Card 14 Only");
         uint256 amount = msg.value;
@@ -82,29 +102,30 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
         return _issuingCard(msg.sender, FIVE_PERCENT_METADATA_URI, 5);
     }
 
-    //Settlement of monthly interest distribution for each card
-    function settlement() public onlyOwner {
-        require(_lastSettlement + 30 days > now, "AEC: Only one settlement per month");
-        _lastSettlement = now;
-        AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
-        uint256 thisAccountPeriodAmount = pool.getThisAccountPeriodAmount();
-        pool.afterSettlement();
-        _cardInterest[5] = thisAccountPeriodAmount.mul(5).div(100);
-        _cardInterest[3] = thisAccountPeriodAmount.mul(3).div(100);
-        _cardInterest[1] = thisAccountPeriodAmount.div(100);
-        _phase = _phase.add(1);
-    }
-
     function receiveInterest(uint256 tokenId) public payable {
         address tokenOwner = ownerOf(tokenId);
         require(msg.sender == tokenOwner, "AEC: This token doesn't belong to you");
+
+        if (_lastSettlement + 30 days >= now) {
+            settlement();
+        }
+
         Token memory token = get(tokenId);
-        require(token.phase < _phase, "AEC: The interest has been collected");
-        uint256 interest = _cardInterest[token.cardType];
-        require(interest > 0, "AEC: No interest.");
-        _tokens.value[tokenId].phase = _tokens.value[tokenId].phase.add(1);
+        require(_phase > token.phase, "AEC: The interest has been collected");
+
         AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
+        uint256 interest = pool.getLastAccountPeriodAmount().mul(token.cardType).div(100);
+        require(interest > 0, "AEC: No interest.");
+        _tokens.value[tokenId].phase = _phase;
         pool._transfer(interest, msg.sender);
+    }
+
+    //Settlement of monthly interest distribution for each card
+    function settlement() public onlyOwner {
+        _lastSettlement = now;
+        AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
+        pool.afterSettlement();
+        _phase = _phase.add(1);
     }
 
     function _issuingCard(address to, string memory tokenURI, uint8 cardType) private returns (uint256) {

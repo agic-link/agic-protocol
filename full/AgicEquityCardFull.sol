@@ -1799,6 +1799,25 @@ interface IAgicAddressesProvider {
 
 }
 
+// File: contracts/interface/IAgicFundPool.sol
+
+
+
+pragma solidity ^0.6.8;
+
+interface IAgicFundPool {
+
+    function getThisAccountPeriodAmount() external view returns (uint256);
+
+    function getLastAccountPeriodAmount() external view returns (uint256);
+
+    function afterSettlement() external;
+
+    function _transfer(uint256 amount, address payable to) external payable;
+
+    function recordTransfer() external payable;
+}
+
 // File: contracts/AgicFundPool.sol
 
 
@@ -1808,11 +1827,14 @@ pragma solidity ^0.6.8;
 
 
 
-contract AgicFundPool {
+
+contract AgicFundPool is IAgicFundPool {
 
     using SafeMath for uint256;
 
     uint256 private _thisAccountPeriodAmount;
+
+    uint256 private _lastAccountPeriodAmount;
 
     IAgicAddressesProvider private provider;
 
@@ -1821,25 +1843,33 @@ contract AgicFundPool {
     }
 
     modifier inWhiteList(address _send){
-        require(provider.verifyFundPoolWhiteList(_send), "This is not an address in the whitelist");
+        require(provider.verifyFundPoolWhiteList(_send), "AgicFundPool: This is not an address in the whitelist");
         _;
     }
 
-    function getThisAccountPeriodAmount() public view returns (uint256){
+    function getThisAccountPeriodAmount() public view override returns (uint256){
         return _thisAccountPeriodAmount;
     }
 
-    function afterSettlement() public inWhiteList(msg.sender) {
-        _thisAccountPeriodAmount = 0;
+    function getLastAccountPeriodAmount() public view override returns (uint256){
+        return _lastAccountPeriodAmount;
     }
 
-    function _transfer(uint256 amount, address payable to) public payable inWhiteList(msg.sender) {
+    function afterSettlement() public override inWhiteList(msg.sender) {
+        uint256 thisAccountPeriodAmount = _thisAccountPeriodAmount;
+        _thisAccountPeriodAmount = 0;
+        _lastAccountPeriodAmount = thisAccountPeriodAmount;
+    }
+
+    function _transfer(uint256 amount, address payable to) public payable override inWhiteList(msg.sender) {
         to.transfer(amount);
     }
 
-    receive() external payable {
+    function recordTransfer() public payable override {
         _thisAccountPeriodAmount = _thisAccountPeriodAmount.add(msg.value);
     }
+
+    receive() external payable {}
 }
 
 // File: contracts/AgicEquityCard.sol
@@ -1874,7 +1904,7 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
 
     struct Token {
         uint256 id;
-        uint8 cardType;
+        uint256 cardType;
         //which phase
         uint256 phase;
     }
@@ -1903,53 +1933,74 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
         _lastSettlement = now;
     }
 
+    function lastSettlement() public view returns (uint){
+        return _lastSettlement;
+    }
+
+    function receiveNextTime() public view returns (uint){
+        return _lastSettlement + 30 days;
+    }
+
+    //Receivable interest
+    function receivableAmount(uint256 tokenId) public view returns (uint256){
+        Token memory token = get(tokenId);
+        AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
+
+        if (token.lastCollectionTime + 30 days > now) {
+            return pool.getThisAccountPeriodAmount().mul(token.cardType).div(100);
+        } else {
+            return pool.getLastAccountPeriodAmount().mul(token.cardType).div(100);
+        }
+    }
+
     function issuingOneCard() public payable returns (uint256) {
-        require(_numberOfCard[1] < 14, "One Percent Card 14 Only");
+        require(_numberOfCard[1] < 14, "AEC: One Percent Card 14 Only");
         uint256 amount = msg.value;
-        require(amount >= 1 ether, "One Percent Card Value 1eth");
+        require(amount >= 1 ether, "AEC: One Percent Card Value 1eth");
         _addressToPayable(owner()).transfer(amount);
         return _issuingCard(msg.sender, ONE_PERCENT_METADATA_URI, 1);
     }
 
     function issuingThreeCard() public payable returns (uint256) {
-        require(_numberOfCard[3] < 7, "Three Percent Card 7 Only");
+        require(_numberOfCard[3] < 7, "AEC: Three Percent Card 7 Only");
         uint256 amount = msg.value;
-        require(amount >= 3 ether, "Three Percent Card Value 3eth");
+        require(amount >= 3 ether, "AEC: Three Percent Card Value 3eth");
         _addressToPayable(owner()).transfer(amount);
         return _issuingCard(msg.sender, THREE_PERCENT_METADATA_URI, 3);
     }
 
     function issuingFiveCard() public payable returns (uint256) {
-        require(_numberOfCard[5] < 3, "Five Percent Card 3 Only");
+        require(_numberOfCard[5] < 3, "AEC: Five Percent Card 3 Only");
         uint256 amount = msg.value;
-        require(amount >= 5 ether, "Five Percent Card Value 5eth");
+        require(amount >= 5 ether, "AEC: Five Percent Card Value 5eth");
         _addressToPayable(owner()).transfer(amount);
         return _issuingCard(msg.sender, FIVE_PERCENT_METADATA_URI, 5);
     }
 
-    //Settlement of monthly interest distribution for each card
-    function settlement() public onlyOwner {
-        require(_lastSettlement + 30 days > now, "Only one settlement per month");
-        _lastSettlement = now;
-        AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
-        uint256 thisAccountPeriodAmount = pool.getThisAccountPeriodAmount();
-        pool.afterSettlement();
-        _cardInterest[5] = thisAccountPeriodAmount.mul(5).div(100);
-        _cardInterest[3] = thisAccountPeriodAmount.mul(3).div(100);
-        _cardInterest[1] = thisAccountPeriodAmount.div(100);
-        _phase = _phase.add(1);
-    }
-
     function receiveInterest(uint256 tokenId) public payable {
         address tokenOwner = ownerOf(tokenId);
-        require(msg.sender == tokenOwner, "This token doesn't belong to you");
+        require(msg.sender == tokenOwner, "AEC: This token doesn't belong to you");
+
+        if (_lastSettlement + 30 days >= now) {
+            settlement();
+        }
+
         Token memory token = get(tokenId);
-        require(token.phase < _phase, "The interest has been collected");
-        uint256 interest = _cardInterest[token.cardType];
-        require(interest > 0, "No interest.");
-        _tokens.value[tokenId].phase = _tokens.value[tokenId].phase.add(1);
+        require(_phase > token.phase, "AEC: The interest has been collected");
+
         AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
+        uint256 interest = pool.getLastAccountPeriodAmount().mul(token.cardType).div(100);
+        require(interest > 0, "AEC: No interest.");
+        _tokens.value[tokenId].phase = _phase;
         pool._transfer(interest, msg.sender);
+    }
+
+    //Settlement of monthly interest distribution for each card
+    function settlement() public onlyOwner {
+        _lastSettlement = now;
+        AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
+        pool.afterSettlement();
+        _phase = _phase.add(1);
     }
 
     function _issuingCard(address to, string memory tokenURI, uint8 cardType) private returns (uint256) {
