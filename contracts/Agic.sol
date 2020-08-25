@@ -119,7 +119,7 @@ contract Agic is ERC20, Ownable {
         super._mint(msg.sender, agic);
         AaveSavingsProtocol aave = _getOrNewAaveProtocol(msg.sender);
         aave.deposit {value : eth}();
-        emit Deposit(eth, msg.sender);
+        emit Deposit(eth, agic, msg.sender);
     }
 
     function redeem(uint256 agic) public {
@@ -155,7 +155,7 @@ contract Agic is ERC20, Ownable {
         AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
         aave.redeem(redeemAmount, serviceCharge);
 
-        emit Redeem(msg.sender, agic, serviceCharge, subPledgeEth);
+        emit Redeem(eth, agic, serviceCharge, subPledgeEth);
     }
 
     function _addressToPayable(address _address) private pure returns (address payable){
@@ -171,8 +171,8 @@ contract Agic is ERC20, Ownable {
         return a.mul(percentage).div(1e5).add(5).div(10);
     }
 
-    event Deposit(uint256 _value, address _sender);
+    event Deposit(uint256 _value, uint256 _agic, address _sender);
 
-    event Redeem(address _owner, uint256 _agic, uint256 serviceCharge, uint256 subPledgeEth);
+    event Redeem(uint256 _value, uint256 _agic, uint256 serviceCharge, uint256 subPledgeEth);
 
 }
