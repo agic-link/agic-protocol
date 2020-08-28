@@ -155,7 +155,7 @@ contract Agic is ERC20, Ownable {
         AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
         aave.redeem(redeemAmount, serviceCharge);
 
-        emit Redeem(eth, agic, serviceCharge, subPledgeEth);
+        emit Redeem(thisEth, agic, serviceCharge, subPledgeEth);
     }
 
     function _addressToPayable(address _address) private pure returns (address payable){

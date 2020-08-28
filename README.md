@@ -27,6 +27,9 @@ npx oz deploy
 3. Agic
 4. AgicEquityCard
 5. add AgicEquityCard address to AgicAddressesProvider._whiteList
+6. add AgicFundPool address to AgicAddressesProvider
+7. add Agic address to AgicAddressesProvider
+8. add AgicEquityCard address to AgicAddressesProvider
 
 ## building full code
 `truffle-flattener <solidity-files> > output.sol`

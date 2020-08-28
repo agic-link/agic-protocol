@@ -1946,7 +1946,7 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
         Token memory token = get(tokenId);
         AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
 
-        if (token.lastCollectionTime + 30 days > now) {
+        if (token.phase == _phase) {
             return pool.getThisAccountPeriodAmount().mul(token.cardType).div(100);
         } else {
             return pool.getLastAccountPeriodAmount().mul(token.cardType).div(100);
