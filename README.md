@@ -48,3 +48,9 @@ Those who purchase AEC can withdraw a certain percentage of interest every month
 - AgicFundPool: [0x4562e390eFB066D954bB487507Ce8C91d6BE1226]
 - Agic: [0xc840A15f11Ec52DD6C3ea69dAb231B8846CDa23c]
 - AgicEquityCard: [0xf59b61be952db69ab18ab29e32857420c62239b6]
+
+## Main Address 
+- AgicAddressesProvider: [0x8efA4E5BDEB06109EdA4c63c92c0504579E51000]
+- AgicFundPool: []
+- Agic: []
+- AgicEquityCard: []
