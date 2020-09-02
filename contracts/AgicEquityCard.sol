@@ -6,40 +6,42 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./constants/ConstantMetadata.sol";
-import "./AgicFundPool.sol";
+import "./interface/IAgicFundPool.sol";
 import "./interface/IAgicAddressesProvider.sol";
 
 contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
 
+    //token Builder（Self-increasing）
+    using Counters for Counters.Counter;
     using SafeMath for uint256;
-
-    struct Map {
-        Token[] value;
-        mapping(uint256 => uint256) _indexes;
-    }
-
-    function add(Token memory token) private {
-        uint256 index = _tokens.value.length + 1;
-        _tokens.value[_tokens._indexes[index]] = token;
-    }
-
-    function get(uint256 tokenId) private view returns (Token memory){
-        return _tokens.value[_tokens._indexes[tokenId]];
-    }
 
     struct Token {
         uint256 id;
-        uint256 cardType;
+        uint8 cardType;
         //which phase
         uint256 phase;
     }
 
-    //token Builder（Self-increasing）
-    using Counters for Counters.Counter;
+    struct Map {
+        Token[] value;
+        ///@dev tokenId => value order
+        mapping(uint256 => uint256) _indexes;
+    }
+
+    function _add(Token memory token) private {
+        uint256 index = _tokens.value.length;
+        _tokens._indexes[token.id] = index;
+        _tokens.value.push(token);
+    }
+
+    function _get(uint256 tokenId) private view returns (Token memory){
+        return _tokens.value[_tokens._indexes[tokenId]];
+    }
+
     Counters.Counter private _tokenIds;
 
     // last settlement date
-    uint private _lastSettlement;
+    uint private _lastSettlementTime;
 
     Map private _tokens;
 
@@ -55,21 +57,32 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
 
     constructor (address agicAddressesProvider) public ERC721("Agic Equity Card", "AEC") Ownable() {
         provider = IAgicAddressesProvider(agicAddressesProvider);
-        _lastSettlement = now;
+        _lastSettlementTime = now;
     }
 
-    function lastSettlement() public view returns (uint){
-        return _lastSettlement;
+    function lastSettlementTime() public view returns (uint){
+        return _lastSettlementTime;
     }
 
-    function receiveNextTime() public view returns (uint){
-        return _lastSettlement + 30 days;
+    function nextSettlementTime() public view returns (uint){
+        return _lastSettlementTime + 30 days;
+    }
+
+    function getPhase() public view returns (uint256){
+        return _phase;
+    }
+
+    function getTokenInfo(uint256 tokenId) public view returns (uint8, uint256){
+        require(_exists(tokenId), "ERC721: nonexistent token");
+        Token memory token = _get(tokenId);
+        return (token.cardType, token.phase);
     }
 
     //Receivable interest
     function receivableAmount(uint256 tokenId) public view returns (uint256){
-        Token memory token = get(tokenId);
-        AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
+        require(_exists(tokenId), "ERC721: nonexistent token");
+        Token memory token = _get(tokenId);
+        IAgicFundPool pool = IAgicFundPool(provider.getAgicFundPool());
 
         if (token.phase == _phase) {
             return pool.getThisAccountPeriodAmount().mul(token.cardType).div(100);
@@ -81,7 +94,7 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
     function issuingOneCard() public payable returns (uint256) {
         require(_numberOfCard[1] < 14, "AEC: One Percent Card 14 Only");
         uint256 amount = msg.value;
-        require(amount >= 1 ether, "AEC: One Percent Card Value 1eth");
+        require(amount >= 1 ether, "AEC: One Percent Card Value 1Eth");
         _addressToPayable(owner()).transfer(amount);
         return _issuingCard(msg.sender, ONE_PERCENT_METADATA_URI, 1);
     }
@@ -106,26 +119,30 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
         address tokenOwner = ownerOf(tokenId);
         require(msg.sender == tokenOwner, "AEC: This token doesn't belong to you");
 
-        if (_lastSettlement + 30 days >= now) {
-            settlement();
+        if (_lastSettlementTime + 30 days < now) {
+            _settlement();
         }
 
-        Token memory token = get(tokenId);
+        Token memory token = _get(tokenId);
         require(_phase > token.phase, "AEC: The interest has been collected");
 
-        AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
+        IAgicFundPool pool = IAgicFundPool(provider.getAgicFundPool());
         uint256 interest = pool.getLastAccountPeriodAmount().mul(token.cardType).div(100);
-        require(interest > 0, "AEC: No interest.");
-        _tokens.value[tokenId].phase = _phase;
-        pool._transfer(interest, msg.sender);
+        require(interest > 0, "AEC: Not have interest");
+        uint256 index = _tokens._indexes[tokenId];
+        _tokens.value[index].phase = _phase;
+        address payable to = _addressToPayable(ownerOf(tokenId));
+        pool._transfer(interest, to);
+        emit ReceiveInterest(now, msg.sender, tokenId, token.cardType, interest);
     }
 
     //Settlement of monthly interest distribution for each card
-    function settlement() public onlyOwner {
-        _lastSettlement = now;
-        AgicFundPool pool = AgicFundPool(provider.getAgicFundPool());
+    function _settlement() private {
+        _lastSettlementTime = now;
+        IAgicFundPool pool = IAgicFundPool(provider.getAgicFundPool());
         pool.afterSettlement();
         _phase = _phase.add(1);
+        emit Settlement(now, msg.sender, pool.getLastAccountPeriodAmount());
     }
 
     function _issuingCard(address to, string memory tokenURI, uint8 cardType) private returns (uint256) {
@@ -134,7 +151,7 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, tokenURI);
         Token memory token = Token(tokenId, cardType, 0);
-        add(token);
+        _add(token);
         _numberOfCard[cardType] += 1;
         return tokenId;
     }
@@ -142,5 +159,9 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
     function _addressToPayable(address _address) private pure returns (address payable){
         return address(uint160(_address));
     }
+
+    event Settlement(uint time, address user, uint256 lastAccountPeriodAmount);
+
+    event ReceiveInterest(uint time, address user, uint256 tokenId, uint8 cardType, uint256 interest);
 
 }

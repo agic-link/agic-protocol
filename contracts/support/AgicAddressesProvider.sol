@@ -36,6 +36,7 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
     }
 
     function addAgicFundPoolWhiteList(address aecAddress) public override onlyOwner {
+        require(_whiteListIndex[aecAddress] != 0, "Address already exists");
         _whiteListIndex[aecAddress] = _whiteList.length;
         _whiteList.push(aecAddress);
     }
@@ -70,6 +71,8 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
     }
 
     function setAgicEquityCard(address agicEquityCard) public override onlyOwner {
+        subAgicFundPoolWhiteList(_agicEquityCard);
+        addAgicFundPoolWhiteList(agicEquityCard);
         _agicEquityCard = agicEquityCard;
     }
 

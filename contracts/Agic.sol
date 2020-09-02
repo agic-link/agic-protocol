@@ -119,7 +119,7 @@ contract Agic is ERC20, Ownable {
         super._mint(msg.sender, agic);
         AaveSavingsProtocol aave = _getOrNewAaveProtocol(msg.sender);
         aave.deposit {value : eth}();
-        emit Deposit(thisEth, agic, msg.sender);
+        emit Deposit(eth, agic, msg.sender);
     }
 
     function redeem(uint256 agic) public {

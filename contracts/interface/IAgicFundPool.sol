@@ -10,7 +10,7 @@ interface IAgicFundPool {
 
     function afterSettlement() external;
 
-    function _transfer(uint256 amount, address payable to) external payable;
+    function _transfer(uint256 amount, address payable to) external;
 
     function recordTransfer() external payable;
 }

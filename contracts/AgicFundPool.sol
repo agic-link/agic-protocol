@@ -21,8 +21,8 @@ contract AgicFundPool is IAgicFundPool {
         provider = IAgicAddressesProvider(agicAddressesProvider);
     }
 
-    modifier inWhiteList(address _send){
-        require(provider.verifyFundPoolWhiteList(_send), "AgicFundPool: This is not an address in the whitelist");
+    modifier inWhiteList(address _sender){
+        require(provider.verifyFundPoolWhiteList(_sender), "AFP: This is not an address in the whitelist");
         _;
     }
 
@@ -36,16 +36,21 @@ contract AgicFundPool is IAgicFundPool {
 
     function afterSettlement() public override inWhiteList(msg.sender) {
         uint256 thisAccountPeriodAmount = _thisAccountPeriodAmount;
-        _thisAccountPeriodAmount = 0;
         _lastAccountPeriodAmount = thisAccountPeriodAmount;
+        _thisAccountPeriodAmount = 0;
     }
 
-    function _transfer(uint256 amount, address payable to) public payable override inWhiteList(msg.sender) {
+    function _transfer(uint256 amount, address payable to) public override inWhiteList(msg.sender) {
+        require(getBalance() >= amount, "AFP: pool not have must balance");
         to.transfer(amount);
     }
 
     function recordTransfer() public payable override {
         _thisAccountPeriodAmount = _thisAccountPeriodAmount.add(msg.value);
+    }
+
+    function getBalance() public view returns (uint256){
+        return address(this).balance;
     }
 
     receive() external payable {}
