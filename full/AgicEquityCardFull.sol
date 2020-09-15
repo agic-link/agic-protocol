@@ -1913,7 +1913,7 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
     }
 
     function issuingOneCard() public payable returns (uint256) {
-        require(_numberOfCard[1] < 14, "AEC: One Percent Card 14 Only");
+        require(_numberOfCard[1] <= 14, "AEC: One Percent Card 14 Only");
         uint256 amount = msg.value;
         require(amount >= 1 ether, "AEC: One Percent Card Value 1Eth");
         _addressToPayable(owner()).transfer(amount);
@@ -1921,7 +1921,7 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
     }
 
     function issuingThreeCard() public payable returns (uint256) {
-        require(_numberOfCard[3] < 7, "AEC: Three Percent Card 7 Only");
+        require(_numberOfCard[3] <= 7, "AEC: Three Percent Card 7 Only");
         uint256 amount = msg.value;
         require(amount >= 3 ether, "AEC: Three Percent Card Value 3eth");
         _addressToPayable(owner()).transfer(amount);
@@ -1929,7 +1929,7 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
     }
 
     function issuingFiveCard() public payable returns (uint256) {
-        require(_numberOfCard[5] < 3, "AEC: Five Percent Card 3 Only");
+        require(_numberOfCard[5] <= 3, "AEC: Five Percent Card 3 Only");
         uint256 amount = msg.value;
         require(amount >= 5 ether, "AEC: Five Percent Card Value 5eth");
         _addressToPayable(owner()).transfer(amount);
