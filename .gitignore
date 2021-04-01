@@ -114,3 +114,5 @@ dist
 
 # solidity
 build
+
+/package-lock.json

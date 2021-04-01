@@ -2,6 +2,6 @@
   "name": "agic-protocol",
   "version": "1.0.0",
   "dependencies": {
-    "truffle-hdwallet-provider": "^1.0.17"
+    "@truffle/hdwallet-provider": "^1.2.6"
   }
 }

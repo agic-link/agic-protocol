@@ -1,4 +1,4 @@
-const HDWalletProvider = require('truffle-hdwallet-provider');
+const HDWalletProvider = require('@truffle/hdwallet-provider');
 const mnemonic = process.env.ETHEREUM_ACCOUNT_MNEMONIC;
 
 module.exports = {
