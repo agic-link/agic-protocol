@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: agpl-3.0
 
 pragma solidity ^0.6.12;
 
@@ -8,6 +8,7 @@ import "./interface/IAgicAddressesProvider.sol";
 import "./interface/IWETH.sol";
 import "./constants/ConstantAddresses.sol";
 import "./aave/ILendingPoolAddressesProvider.sol";
+import "./aave/ILendingPool.sol";
 import "./aave/IAToken.sol";
 
 contract Agic is ConstantAddresses, ERC20, Ownable {
@@ -31,7 +32,8 @@ contract Agic is ConstantAddresses, ERC20, Ownable {
         _aWETH = IAToken(AAVE_ATOKEN_WETH);
         _aaveProvider = ILendingPoolAddressesProvider(AAVE_LENDING_POOL_ADDRESSES_PROVIDER);
         _WETH = IWETH(WETH);
-        _WETH.approve(_aaveProvider.getLendingPool(), uint256(- 1));
+        //todo 修改到不是构建时授权
+        IWETH(WETH).approve(ILendingPoolAddressesProvider(AAVE_LENDING_POOL_ADDRESSES_PROVIDER).getLendingPool(), uint256(- 1));
     }
 
     modifier notZeroAddress(address _to) {
@@ -48,7 +50,8 @@ contract Agic is ConstantAddresses, ERC20, Ownable {
     }
 
     function _rewardAmount(address owner) private view returns (uint256 reward){
-        uint256 totalBalanceOf = _aWETH.getScaledUserBalanceAndSupply(address(this));
+        (,uint256 totalBalanceOf) = _aWETH.getScaledUserBalanceAndSupply(address(this));
+        uint256 ownerPledgeEth = _pledgeEth[owner];
         uint256 numerator = ownerPledgeEth.mul(totalBalanceOf);
         uint256 denominator = _totalPledgeEth;
         uint256 balanceAndSupply = numerator.div(denominator);

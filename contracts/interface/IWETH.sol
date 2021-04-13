@@ -8,5 +8,5 @@ interface IWETH {
 
     function withdraw(uint) external;
 
-    function approve(address to, uint value) public returns (bool);
+    function approve(address to, uint value) external returns (bool);
 }
