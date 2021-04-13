@@ -24,7 +24,7 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
     address[] private _whiteList;
 
     constructor() public {
-        _whiteList.push(address(0));
+        _whiteList.push();
     }
 
     function getAgicFundPoolWhiteList() public view override returns (address[] memory){

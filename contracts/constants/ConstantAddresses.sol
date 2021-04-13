@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.12;
 
 import "./ConstantAddressesMainnet.sol";
-import "./ConstantAddressesRopsten.sol";
+import "./ConstantAddressesKovan.sol";
 
 
-contract ConstantAddresses is ConstantAddressesMainnet {
+contract ConstantAddresses is ConstantAddressesKovan {
 }

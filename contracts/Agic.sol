@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./AaveSavingsProtocol.sol";
 import "./interface/IAgicAddressesProvider.sol";
+import "./interface/IWETH.sol";
+import "./constants/ConstantAddresses.sol";
+import "./aave/ILendingPoolAddressesProvider.sol";
+import "./aave/IAToken.sol";
 
-contract Agic is ERC20, Ownable {
+contract Agic is ConstantAddresses, ERC20, Ownable {
 
     using SafeMath for uint256;
 
@@ -15,15 +18,20 @@ contract Agic is ERC20, Ownable {
 
     mapping(address => uint256) private _pledgeEth;
 
-    //user => aaveContract
-    mapping(address => address) private _aaveContract;
+    IAgicAddressesProvider public immutable _provider;
 
-    address private _agicAddressesProvider;
+    ILendingPoolAddressesProvider public immutable _aaveProvider;
 
-    address payable private _provider;
+    IAToken public immutable _aWETH;
+
+    IWETH public immutable _WETH;
 
     constructor (address payable agicAddressesProvider) public ERC20("Automatically Generate Of Interest Coin", "AGIC") Ownable(){
-        _provider = agicAddressesProvider;
+        _provider = IAgicAddressesProvider(agicAddressesProvider);
+        _aWETH = IAToken(AAVE_ATOKEN_WETH);
+        _aaveProvider = ILendingPoolAddressesProvider(AAVE_LENDING_POOL_ADDRESSES_PROVIDER);
+        _WETH = IWETH(WETH);
+        _WETH.approve(_aaveProvider.getLendingPool(), uint256(- 1));
     }
 
     modifier notZeroAddress(address _to) {
@@ -31,54 +39,27 @@ contract Agic is ERC20, Ownable {
         _;
     }
 
-    function getAgicAddressesProviderAddress() public view returns (address){
-        return _provider;
-    }
-
     function totalPledgeEth() public view returns (uint256){
         return _totalPledgeEth;
-    }
-
-    function _getAgicAddressesProvider() private view returns (IAgicAddressesProvider){
-        return IAgicAddressesProvider(_provider);
-    }
-
-    function aaveProtocol(address owner) public view notZeroAddress(owner) returns (address){
-        return _aaveContract[owner];
-    }
-
-    function balanceOf(address owner) public view override(ERC20) notZeroAddress(owner) returns (uint256){
-        return _ethOfAave(owner).mul(4);
     }
 
     function pledgeEth(address owner) public view notZeroAddress(owner) returns (uint256){
         return _pledgeEth[owner];
     }
 
-    //Current interest earned
-    function interestAmount(address owner) public view notZeroAddress(owner) returns (uint256){
-        return _interestAmount(owner);
+    function _rewardAmount(address owner) private view returns (uint256 reward){
+        uint256 totalBalanceOf = _aWETH.getScaledUserBalanceAndSupply(address(this));
+        uint256 numerator = ownerPledgeEth.mul(totalBalanceOf);
+        uint256 denominator = _totalPledgeEth;
+        uint256 balanceAndSupply = numerator.div(denominator);
+        reward = balanceAndSupply.sub(ownerPledgeEth).mul(100).div(97);
     }
 
-    function _interestAmount(address owner) private view returns (uint256){
-        uint256 ethOfAave = _ethOfAave(owner);
-        return ethOfAave > _pledgeEth[owner] ? ethOfAave.sub(_pledgeEth[owner]) : 0;
-    }
-
-    function _ethOfAave(address owner) private view returns (uint256){
-        address payable aaveProtocolAddress = _addressToPayable(_aaveContract[owner]);
-        if (aaveProtocolAddress == address(0)) {
-            return 0;
-        } else {
-            AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
-            return aave.balanceOf();
-        }
-    }
-
-    function _getAaveProtocol(address _owner) private view returns (AaveSavingsProtocol){
-        address payable aaveProtocolAddress = _addressToPayable(_aaveContract[_owner]);
-        require(aaveProtocolAddress != address(0), "Agic: not have aave protocol");
-        return AaveSavingsProtocol(aaveProtocolAddress);
+    //pledge + reward
+    function ethBalanceOf(address owner) public view returns (uint256){
+        uint256 ownerPledgeEth = _pledgeEth[owner];
+        uint256 reward = _rewardAmount(owner);
+        return ownerPledgeEth + reward;
     }
 
     function _transfer(address from, address to, uint256 amount) internal override(ERC20) {
@@ -86,93 +67,53 @@ contract Agic is ERC20, Ownable {
         uint256 balance = balanceOf(from);
         require(balance > amount, "Agic: transfer amount exceeds balance");
 
-        uint256 percentage = _percentage(amount, balance);
-        uint256 subPledgeEth = _takePercentage(_pledgeEth[from], percentage);
+        uint256 subPledgeEth = amount.div(4);
         _pledgeEth[from] = _pledgeEth[from].sub(subPledgeEth);
         _pledgeEth[to] = _pledgeEth[to].add(subPledgeEth);
 
-        uint256 eth = amount.div(4);
-        AaveSavingsProtocol fromAave = _getAaveProtocol(from);
-        AaveSavingsProtocol toAave = _getOrNewAaveProtocol(_addressToPayable(to));
-        fromAave.transfer(address(toAave), eth);
         super._transfer(from, to, amount);
-    }
-
-    function _getOrNewAaveProtocol(address payable _owner) private returns (AaveSavingsProtocol){
-        AaveSavingsProtocol aave;
-        address payable aaveProtocolAddress = _addressToPayable(_aaveContract[_owner]);
-        if (aaveProtocolAddress == address(0)) {
-            aave = new AaveSavingsProtocol(_owner, _provider);
-            _aaveContract[_owner] = address(aave);
-        } else {
-            aave = AaveSavingsProtocol(aaveProtocolAddress);
-        }
-        return aave;
     }
 
     //Pledge eth in exchange for AGIC
     function deposit() public payable {
         uint256 eth = msg.value;
         uint256 agic = eth.mul(4);
+
         _totalPledgeEth = _totalPledgeEth.add(eth);
         _pledgeEth[msg.sender] = _pledgeEth[msg.sender].add(eth);
         super._mint(msg.sender, agic);
-        AaveSavingsProtocol aave = _getOrNewAaveProtocol(msg.sender);
-        aave.deposit {value : eth}();
+
+        _WETH.deposit{value : eth}();
+        ILendingPool(_aaveProvider.getLendingPool()).deposit(AAVE_ATOKEN_WETH, eth, address(this), 0);
         emit Deposit(eth, agic, msg.sender);
     }
 
-    function redeem(uint256 agic) public {
-        address payable aaveProtocolAddress = _addressToPayable(_aaveContract[msg.sender]);
-        require(aaveProtocolAddress != address(0), "Agic: not have protocol");
-
-        uint256 balance = balanceOf(msg.sender);
+    function withdraw(uint256 agic) public {
+        uint256 balance = ethBalanceOf(msg.sender).mul(4);
         require(balance >= agic, "Agic: Not so much balance");
 
-        uint256 userEth = _ethOfAave(msg.sender);
-        uint256 thisEth = agic.div(4);
-        require(userEth >= thisEth, "Agic: Not so much pledge Eth");
-
-        uint256 interest = _interestAmount(msg.sender);
-        uint256 serviceCharge = interest >= 1e15 ? interest.div(20) : 0;
-        uint256 redeemAmount = thisEth.add(serviceCharge);
-
         uint256 userPledgeEth = _pledgeEth[msg.sender];
-        uint256 subPledgeEth;
-        if (redeemAmount >= userEth) {
-            subPledgeEth = userPledgeEth;
-            redeemAmount = userEth;
-        } else {
-            uint256 percentage = _percentage(redeemAmount, userEth);
-            subPledgeEth = _takePercentage(userPledgeEth, percentage);
-            subPledgeEth = subPledgeEth > userPledgeEth ? userPledgeEth : subPledgeEth;
-        }
+        uint256 subPledgeEth = agic.div(4) > userPledgeEth ? userPledgeEth : agic.div(4);
 
         _pledgeEth[msg.sender] = userPledgeEth.sub(subPledgeEth);
         _totalPledgeEth = _totalPledgeEth.sub(subPledgeEth);
         _burn(msg.sender, subPledgeEth.mul(4));
 
-        AaveSavingsProtocol aave = AaveSavingsProtocol(aaveProtocolAddress);
-        aave.redeem(redeemAmount, serviceCharge);
+        ILendingPool(_aaveProvider.getLendingPool()).withdraw(AAVE_ATOKEN_WETH, subPledgeEth, address(this));
+        _WETH.withdraw(subPledgeEth);
 
-        emit Redeem(thisEth, agic, serviceCharge, subPledgeEth);
+        safeTransferETH(msg.sender, subPledgeEth);
+
+        emit Redeem(subPledgeEth, agic, msg.sender);
     }
 
-    function _addressToPayable(address _address) private pure returns (address payable){
-        return address(uint160(_address));
-    }
-
-    /// @dev 40% = 400000000, 0.01%=10000, Calculate percentage with 6 decimal places,rounding 0.5=1,0.4=0
-    function _percentage(uint256 a, uint256 b) private pure returns (uint256){
-        return a.mul(1e7).div(b).add(5).div(10);
-    }
-
-    function _takePercentage(uint256 a, uint256 percentage) private pure returns (uint256){
-        return a.mul(percentage).div(1e5).add(5).div(10);
+    function safeTransferETH(address to, uint value) internal {
+        (bool success,) = to.call{value : value}(new bytes(0));
+        require(success, 'Agic: ETH_TRANSFER_FAILED');
     }
 
     event Deposit(uint256 _value, uint256 _agic, address _sender);
 
-    event Redeem(uint256 _value, uint256 _agic, uint256 serviceCharge, uint256 subPledgeEth);
+    event Redeem(uint256 _value, uint256 _agic, address _sender);
 
 }
