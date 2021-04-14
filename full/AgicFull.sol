@@ -1,4 +1,5 @@
 // File: ..\..\node_modules\@openzeppelin\contracts\utils\Context.sol
+
 // SPDX-License-Identifier: agpl-3.0
 
 
@@ -742,6 +743,25 @@ interface IAgicAddressesProvider {
 
 }
 
+// File: contracts\interface\IAgicFundPool.sol
+
+
+
+pragma solidity ^0.6.12;
+
+interface IAgicFundPool {
+
+    function getThisAccountPeriodAmount() external view returns (uint256);
+
+    function getLastAccountPeriodAmount() external view returns (uint256);
+
+    function afterSettlement() external;
+
+    function _transfer(uint256 amount, address payable to) external;
+
+    function recordTransfer() external payable;
+}
+
 // File: contracts\interface\IWETH.sol
 
 
@@ -1460,6 +1480,7 @@ pragma solidity ^0.6.12;
 
 
 
+
 contract Agic is ConstantAddresses, ERC20, Ownable {
 
     using SafeMath for uint256;
@@ -1481,7 +1502,7 @@ contract Agic is ConstantAddresses, ERC20, Ownable {
         _aWETH = IAToken(AAVE_ATOKEN_WETH);
         _aaveProvider = ILendingPoolAddressesProvider(AAVE_LENDING_POOL_ADDRESSES_PROVIDER);
         _WETH = IWETH(WETH);
-        IWETH(WETH).approve(ILendingPoolAddressesProvider(AAVE_LENDING_POOL_ADDRESSES_PROVIDER).getLendingPool(), uint256(- 1));
+        _safeApprove(WETH, ILendingPoolAddressesProvider(AAVE_LENDING_POOL_ADDRESSES_PROVIDER).getLendingPool(), uint256(- 1));
     }
 
     modifier notZeroAddress(address _to) {
@@ -1497,19 +1518,10 @@ contract Agic is ConstantAddresses, ERC20, Ownable {
         return _pledgeEth[owner];
     }
 
-    function _rewardAmount(address owner) private view returns (uint256 reward){
-        (,uint256 totalBalanceOf) = _aWETH.getScaledUserBalanceAndSupply(address(this));
-        uint256 ownerPledgeEth = _pledgeEth[owner];
-        uint256 numerator = ownerPledgeEth.mul(totalBalanceOf);
-        uint256 denominator = _totalPledgeEth;
-        uint256 balanceAndSupply = numerator.div(denominator);
-        reward = balanceAndSupply.sub(ownerPledgeEth).mul(100).div(97);
-    }
-
     //pledge + reward
-    function ethBalanceOf(address owner) public view returns (uint256){
+    function ethBalanceOf(address owner) public view notZeroAddress(owner) returns (uint256){
         uint256 ownerPledgeEth = _pledgeEth[owner];
-        uint256 reward = _rewardAmount(owner);
+        (,uint256 reward,) = _rewardAmount(ownerPledgeEth);
         return ownerPledgeEth + reward;
     }
 
@@ -1543,24 +1555,51 @@ contract Agic is ConstantAddresses, ERC20, Ownable {
         uint256 balance = ethBalanceOf(msg.sender).mul(4);
         require(balance >= agic, "Agic: Not so much balance");
 
+        uint256 withdrawEth = agic.div(4);
+        (uint256 subPledge,,uint256 fee) = _rewardAmount(withdrawEth);
+
         uint256 userPledgeEth = _pledgeEth[msg.sender];
-        uint256 subPledgeEth = agic.div(4) > userPledgeEth ? userPledgeEth : agic.div(4);
+        uint256 subPledgeEth = subPledge > userPledgeEth ? userPledgeEth : subPledge;
 
         _pledgeEth[msg.sender] = userPledgeEth.sub(subPledgeEth);
         _totalPledgeEth = _totalPledgeEth.sub(subPledgeEth);
         _burn(msg.sender, subPledgeEth.mul(4));
 
         ILendingPool(_aaveProvider.getLendingPool()).withdraw(AAVE_ATOKEN_WETH, subPledgeEth, address(this));
-        _WETH.withdraw(subPledgeEth);
+        _WETH.withdraw(subPledgeEth.add(fee));
 
-        safeTransferETH(msg.sender, subPledgeEth);
+        _safeTransferETH(msg.sender, subPledgeEth);
+        IAgicFundPool(_provider.getAgicFundPool()).recordTransfer{value : fee}();
 
         emit Redeem(subPledgeEth, agic, msg.sender);
     }
 
-    function safeTransferETH(address to, uint value) internal {
+    /**
+     * @dev Calculate reward and fee based on the withdrawal amount
+     * @return subPledge Reduced amount of pledged eth ,
+     * fee Platform revenue
+     */
+    function _rewardAmount(uint256 amount) internal view returns (uint256 subPledge, uint256 reward, uint256 fee){
+        (,uint256 totalBalanceOf) = _aWETH.getScaledUserBalanceAndSupply(address(this));
+        uint256 supply;
+        {
+            uint256 numerator = amount.mul(_totalPledgeEth);
+            subPledge = numerator.div(totalBalanceOf);
+            supply = amount.sub(subPledge);
+        }
+        reward = supply.mul(95).div(100);
+        fee = supply.mul(5).div(100);
+    }
+
+    function _safeTransferETH(address to, uint value) internal {
         (bool success,) = to.call{value : value}(new bytes(0));
         require(success, 'Agic: ETH_TRANSFER_FAILED');
+    }
+
+    function _safeApprove(address token, address to, uint value) internal {
+        // bytes4(keccak256(bytes('approve(address,uint256)'))) = 0x095ea7b3;
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0x095ea7b3, to, value));
+        require(success && (data.length == 0 || abi.decode(data, (bool))), 'Agic: APPROVE_FAILED');
     }
 
     event Deposit(uint256 _value, uint256 _agic, address _sender);
