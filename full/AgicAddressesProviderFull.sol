@@ -211,8 +211,6 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
     }
 
     function setAgicEquityCard(address agicEquityCard) public override onlyOwner {
-        subAgicFundPoolWhiteList(_agicEquityCard);
-        addAgicFundPoolWhiteList(agicEquityCard);
         _agicEquityCard = agicEquityCard;
     }
 
