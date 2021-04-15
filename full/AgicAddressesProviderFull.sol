@@ -1,9 +1,8 @@
-// SPDX-License-Identifier: MIT
-// File: contracts/interface/IAgicAddressesProvider.sol
+// File: contracts\interface\IAgicAddressesProvider.sol
 
+// SPDX-License-Identifier: agpl-3.0
 
-
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.12;
 
 /**
 @title AgicAddressesProvider interface
@@ -41,11 +40,11 @@ interface IAgicAddressesProvider {
 
 }
 
-// File: @openzeppelin/contracts/GSN/Context.sol
+// File: ..\..\node_modules\@openzeppelin\contracts\utils\Context.sol
 
 
 
-pragma solidity ^0.6.0;
+pragma solidity >=0.6.0 <0.8.0;
 
 /*
  * @dev Provides information about the current execution context, including the
@@ -68,11 +67,11 @@ abstract contract Context {
     }
 }
 
-// File: @openzeppelin/contracts/access/Ownable.sol
+// File: @openzeppelin\contracts\access\Ownable.sol
 
 
 
-pragma solidity ^0.6.0;
+pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -86,7 +85,7 @@ pragma solidity ^0.6.0;
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-contract Ownable is Context {
+abstract contract Ownable is Context {
     address private _owner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -103,7 +102,7 @@ contract Ownable is Context {
     /**
      * @dev Returns the address of the current owner.
      */
-    function owner() public view returns (address) {
+    function owner() public view virtual returns (address) {
         return _owner;
     }
 
@@ -111,7 +110,7 @@ contract Ownable is Context {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(_owner == _msgSender(), "Ownable: caller is not the owner");
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
         _;
     }
 
@@ -138,10 +137,10 @@ contract Ownable is Context {
     }
 }
 
-// File: contracts/support/AgicAddressesProvider.sol
+// File: contracts\AgicAddressesProvider.sol
 
 
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.12;
 
 
 
@@ -165,7 +164,7 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
     address[] private _whiteList;
 
     constructor() public {
-        _whiteList.push(address(0));
+        _whiteList.push();
     }
 
     function getAgicFundPoolWhiteList() public view override returns (address[] memory){
@@ -177,7 +176,7 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
     }
 
     function addAgicFundPoolWhiteList(address aecAddress) public override onlyOwner {
-        require(_whiteListIndex[aecAddress] != 0, "Address already exists");
+        require(_whiteListIndex[aecAddress] == 0, "Address already exists");
         _whiteListIndex[aecAddress] = _whiteList.length;
         _whiteList.push(aecAddress);
     }

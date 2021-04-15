@@ -43,14 +43,14 @@ If the interest is greater than 1 finney, a fee of 1 finney will be charged for 
 
 Those who purchase AEC can withdraw a certain percentage of interest every month
 
-## Ropsten Address 
-- AgicAddressesProvider: [0x58237b0b0233b5b14057a3a6e5f83989bb9ce7f6]
-- AgicFundPool: [0x4562e390eFB066D954bB487507Ce8C91d6BE1226]
-- Agic: [0xc840A15f11Ec52DD6C3ea69dAb231B8846CDa23c]
-- AgicEquityCard: [0xf59b61be952db69ab18ab29e32857420c62239b6]
+## Kovan Address 
+- AgicAddressesProvider: [0xa65CaE64DAf799a38Ca0AD6818e131007DCe14eD]
+- AgicFundPool: [0xc1f97c26bfB686cc17fE48f5eb317922662B2E56]
+- Agic: [0x5fB11598DDfEF37be63dC3665cFb68A8F940F8F9]
+- AgicEquityCard: [0x107ce128dB494865F3062c8DD1977A5b78ea1ADA]
 
 ## Main Address 
-- AgicAddressesProvider: [0x8efA4E5BDEB06109EdA4c63c92c0504579E51000]
+- AgicAddressesProvider: []
 - AgicFundPool: []
 - Agic: []
 - AgicEquityCard: []

@@ -1,9 +1,8 @@
-// SPDX-License-Identifier: MIT
-// File: @openzeppelin/contracts/math/SafeMath.sol
+// File: @openzeppelin\contracts\math\SafeMath.sol
 
+// SPDX-License-Identifier: agpl-3.0
 
-
-pragma solidity ^0.6.0;
+pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -20,6 +19,62 @@ pragma solidity ^0.6.0;
  */
 library SafeMath {
     /**
+     * @dev Returns the addition of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        uint256 c = a + b;
+        if (c < a) return (false, 0);
+        return (true, c);
+    }
+
+    /**
+     * @dev Returns the substraction of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        if (b > a) return (false, 0);
+        return (true, a - b);
+    }
+
+    /**
+     * @dev Returns the multiplication of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
+        if (a == 0) return (true, 0);
+        uint256 c = a * b;
+        if (c / a != b) return (false, 0);
+        return (true, c);
+    }
+
+    /**
+     * @dev Returns the division of two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        if (b == 0) return (false, 0);
+        return (true, a / b);
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        if (b == 0) return (false, 0);
+        return (true, a % b);
+    }
+
+    /**
      * @dev Returns the addition of two unsigned integers, reverting on
      * overflow.
      *
@@ -32,7 +87,6 @@ library SafeMath {
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
         require(c >= a, "SafeMath: addition overflow");
-
         return c;
     }
 
@@ -47,24 +101,8 @@ library SafeMath {
      * - Subtraction cannot overflow.
      */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        return sub(a, b, "SafeMath: subtraction overflow");
-    }
-
-    /**
-     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
-     * overflow (when the result is negative).
-     *
-     * Counterpart to Solidity's `-` operator.
-     *
-     * Requirements:
-     *
-     * - Subtraction cannot overflow.
-     */
-    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        require(b <= a, errorMessage);
-        uint256 c = a - b;
-
-        return c;
+        require(b <= a, "SafeMath: subtraction overflow");
+        return a - b;
     }
 
     /**
@@ -78,21 +116,14 @@ library SafeMath {
      * - Multiplication cannot overflow.
      */
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
-        // benefit is lost if 'b' is also tested.
-        // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
-        if (a == 0) {
-            return 0;
-        }
-
+        if (a == 0) return 0;
         uint256 c = a * b;
         require(c / a == b, "SafeMath: multiplication overflow");
-
         return c;
     }
 
     /**
-     * @dev Returns the integer division of two unsigned integers. Reverts on
+     * @dev Returns the integer division of two unsigned integers, reverting on
      * division by zero. The result is rounded towards zero.
      *
      * Counterpart to Solidity's `/` operator. Note: this function uses a
@@ -104,12 +135,51 @@ library SafeMath {
      * - The divisor cannot be zero.
      */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        return div(a, b, "SafeMath: division by zero");
+        require(b > 0, "SafeMath: division by zero");
+        return a / b;
     }
 
     /**
-     * @dev Returns the integer division of two unsigned integers. Reverts with custom message on
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * reverting when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b > 0, "SafeMath: modulo by zero");
+        return a % b;
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
+     * overflow (when the result is negative).
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {trySub}.
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
+    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        require(b <= a, errorMessage);
+        return a - b;
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers, reverting with custom message on
      * division by zero. The result is rounded towards zero.
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {tryDiv}.
      *
      * Counterpart to Solidity's `/` operator. Note: this function uses a
      * `revert` opcode (which leaves remaining gas untouched) while Solidity
@@ -121,31 +191,15 @@ library SafeMath {
      */
     function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
         require(b > 0, errorMessage);
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-
-        return c;
+        return a / b;
     }
 
     /**
      * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
-     * Reverts when dividing by zero.
+     * reverting with custom message when dividing by zero.
      *
-     * Counterpart to Solidity's `%` operator. This function uses a `revert`
-     * opcode (which leaves remaining gas untouched) while Solidity uses an
-     * invalid opcode to revert (consuming all remaining gas).
-     *
-     * Requirements:
-     *
-     * - The divisor cannot be zero.
-     */
-    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-        return mod(a, b, "SafeMath: modulo by zero");
-    }
-
-    /**
-     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
-     * Reverts with custom message when dividing by zero.
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {tryMod}.
      *
      * Counterpart to Solidity's `%` operator. This function uses a `revert`
      * opcode (which leaves remaining gas untouched) while Solidity uses an
@@ -156,16 +210,16 @@ library SafeMath {
      * - The divisor cannot be zero.
      */
     function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        require(b != 0, errorMessage);
+        require(b > 0, errorMessage);
         return a % b;
     }
 }
 
-// File: @openzeppelin/contracts/GSN/Context.sol
+// File: ..\..\node_modules\@openzeppelin\contracts\utils\Context.sol
 
 
 
-pragma solidity ^0.6.0;
+pragma solidity >=0.6.0 <0.8.0;
 
 /*
  * @dev Provides information about the current execution context, including the
@@ -188,11 +242,11 @@ abstract contract Context {
     }
 }
 
-// File: @openzeppelin/contracts/access/Ownable.sol
+// File: @openzeppelin\contracts\access\Ownable.sol
 
 
 
-pragma solidity ^0.6.0;
+pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -206,7 +260,7 @@ pragma solidity ^0.6.0;
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-contract Ownable is Context {
+abstract contract Ownable is Context {
     address private _owner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -223,7 +277,7 @@ contract Ownable is Context {
     /**
      * @dev Returns the address of the current owner.
      */
-    function owner() public view returns (address) {
+    function owner() public view virtual returns (address) {
         return _owner;
     }
 
@@ -231,7 +285,7 @@ contract Ownable is Context {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(_owner == _msgSender(), "Ownable: caller is not the owner");
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
         _;
     }
 
@@ -258,11 +312,11 @@ contract Ownable is Context {
     }
 }
 
-// File: contracts/interface/IAgicAddressesProvider.sol
+// File: contracts\interface\IAgicAddressesProvider.sol
 
 
 
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.12;
 
 /**
 @title AgicAddressesProvider interface
@@ -300,30 +354,27 @@ interface IAgicAddressesProvider {
 
 }
 
-// File: contracts/interface/IAgicFundPool.sol
+// File: contracts\interface\IAgicFundPool.sol
 
 
 
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.12;
 
 interface IAgicFundPool {
 
-    function getThisAccountPeriodAmount() external view returns (uint256);
+    function getBalanceOf() external view  returns (uint256);
 
-    function getLastAccountPeriodAmount() external view returns (uint256);
-
-    function afterSettlement() external;
+    function getTotalAmount() external view  returns (uint256);
 
     function _transfer(uint256 amount, address payable to) external;
 
     function recordTransfer() external payable;
 }
 
-// File: contracts/AgicFundPool.sol
+// File: contracts\AgicFundPool.sol
 
 
-pragma solidity ^0.6.8;
-
+pragma solidity ^0.6.12;
 
 
 
@@ -333,46 +384,38 @@ contract AgicFundPool is IAgicFundPool {
 
     using SafeMath for uint256;
 
-    uint256 private _thisAccountPeriodAmount;
+    IAgicAddressesProvider private _provider;
 
-    uint256 private _lastAccountPeriodAmount;
+    uint256 private _balanceOf;
 
-    IAgicAddressesProvider private provider;
+    uint256 private _totalAmount;
 
     constructor(address agicAddressesProvider) public {
-        provider = IAgicAddressesProvider(agicAddressesProvider);
+        _provider = IAgicAddressesProvider(agicAddressesProvider);
     }
 
-    modifier inWhiteList(address _sender){
-        require(provider.verifyFundPoolWhiteList(_sender), "AFP: This is not an address in the whitelist");
+    modifier inWhiteList(address sender){
+        require(_provider.verifyFundPoolWhiteList(sender), "AFP: This is not an address in the whitelist");
         _;
     }
 
-    function getThisAccountPeriodAmount() public view override returns (uint256){
-        return _thisAccountPeriodAmount;
+    function getBalanceOf() public view override returns (uint256){
+        return _balanceOf;
     }
 
-    function getLastAccountPeriodAmount() public view override returns (uint256){
-        return _lastAccountPeriodAmount;
-    }
-
-    function afterSettlement() public override inWhiteList(msg.sender) {
-        uint256 thisAccountPeriodAmount = _thisAccountPeriodAmount;
-        _lastAccountPeriodAmount = thisAccountPeriodAmount;
-        _thisAccountPeriodAmount = 0;
+    function getTotalAmount() public view override returns (uint256){
+        return _totalAmount;
     }
 
     function _transfer(uint256 amount, address payable to) public override inWhiteList(msg.sender) {
-        require(getBalance() >= amount, "AFP: pool not have must balance");
+        _balanceOf = address(this).balance;
+        require(_balanceOf >= amount, "AFP: pool not have must balance");
         to.transfer(amount);
     }
 
     function recordTransfer() public payable override {
-        _thisAccountPeriodAmount = _thisAccountPeriodAmount.add(msg.value);
-    }
-
-    function getBalance() public view returns (uint256){
-        return address(this).balance;
+        _balanceOf = _balanceOf.add(msg.value);
+        _totalAmount = _totalAmount.add(msg.value);
     }
 
     receive() external payable {}

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.6.12;
 
 import "./interface/IAgicAddressesProvider.sol";
@@ -36,7 +36,7 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
     }
 
     function addAgicFundPoolWhiteList(address aecAddress) public override onlyOwner {
-        require(_whiteListIndex[aecAddress] != 0, "Address already exists");
+        require(_whiteListIndex[aecAddress] == 0, "Address already exists");
         _whiteListIndex[aecAddress] = _whiteList.length;
         _whiteList.push(aecAddress);
     }

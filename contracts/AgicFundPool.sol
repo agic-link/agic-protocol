@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -6,51 +6,42 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interface/IAgicAddressesProvider.sol";
 import "./interface/IAgicFundPool.sol";
 
-
 contract AgicFundPool is IAgicFundPool {
 
     using SafeMath for uint256;
 
-    uint256 private _thisAccountPeriodAmount;
+    IAgicAddressesProvider private _provider;
 
-    uint256 private _lastAccountPeriodAmount;
+    uint256 private _balanceOf;
 
-    IAgicAddressesProvider private provider;
+    uint256 private _totalAmount;
 
     constructor(address agicAddressesProvider) public {
-        provider = IAgicAddressesProvider(agicAddressesProvider);
+        _provider = IAgicAddressesProvider(agicAddressesProvider);
     }
 
-    modifier inWhiteList(address _sender){
-        require(provider.verifyFundPoolWhiteList(_sender), "AFP: This is not an address in the whitelist");
+    modifier inWhiteList(address sender){
+        require(_provider.verifyFundPoolWhiteList(sender), "AFP: This is not an address in the whitelist");
         _;
     }
 
-    function getThisAccountPeriodAmount() public view override returns (uint256){
-        return _thisAccountPeriodAmount;
+    function getBalanceOf() public view override returns (uint256){
+        return _balanceOf;
     }
 
-    function getLastAccountPeriodAmount() public view override returns (uint256){
-        return _lastAccountPeriodAmount;
-    }
-
-    function afterSettlement() public override inWhiteList(msg.sender) {
-        uint256 thisAccountPeriodAmount = _thisAccountPeriodAmount;
-        _lastAccountPeriodAmount = thisAccountPeriodAmount;
-        _thisAccountPeriodAmount = 0;
+    function getTotalAmount() public view override returns (uint256){
+        return _totalAmount;
     }
 
     function _transfer(uint256 amount, address payable to) public override inWhiteList(msg.sender) {
-        require(getBalance() >= amount, "AFP: pool not have must balance");
+        _balanceOf = address(this).balance;
+        require(_balanceOf >= amount, "AFP: pool not have must balance");
         to.transfer(amount);
     }
 
     function recordTransfer() public payable override {
-        _thisAccountPeriodAmount = _thisAccountPeriodAmount.add(msg.value);
-    }
-
-    function getBalance() public view returns (uint256){
-        return address(this).balance;
+        _balanceOf = _balanceOf.add(msg.value);
+        _totalAmount = _totalAmount.add(msg.value);
     }
 
     receive() external payable {}

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: agpl-3.0
 
 pragma solidity ^0.6.12;
 
@@ -14,81 +14,36 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
     //token Builder（Self-increasing）
     using Counters for Counters.Counter;
     using SafeMath for uint256;
-
-    struct Token {
-        uint256 id;
-        uint8 cardType;
-        //which phase
-        uint256 phase;
-    }
-
-    struct Map {
-        Token[] value;
-        ///@dev tokenId => value order
-        mapping(uint256 => uint256) _indexes;
-    }
-
-    function _add(Token memory token) private {
-        uint256 index = _tokens.value.length;
-        _tokens._indexes[token.id] = index;
-        _tokens.value.push(token);
-    }
-
-    function _get(uint256 tokenId) private view returns (Token memory){
-        return _tokens.value[_tokens._indexes[tokenId]];
-    }
-
     Counters.Counter private _tokenIds;
 
-    // last settlement date
-    uint private _lastSettlementTime;
+    //tokenId => received
+    mapping(uint256 => uint256) private _cardReceived;
 
-    Map private _tokens;
-
-    uint256 private _phase;
-
-    //type=>interest
-    mapping(uint8 => uint256) private _cardInterest;
-
-    //type=>amount
+    //type => amount
     mapping(uint8 => uint8) private _numberOfCard;
 
-    IAgicAddressesProvider private provider;
+    //tokenId => cardType
+    mapping(uint256 => uint8) private _cardType;
+
+    IAgicAddressesProvider public immutable _provider;
 
     constructor (address agicAddressesProvider) public ERC721("Agic Equity Card", "AEC") Ownable() {
-        provider = IAgicAddressesProvider(agicAddressesProvider);
-        _lastSettlementTime = now;
+        _provider = IAgicAddressesProvider(agicAddressesProvider);
     }
 
-    function lastSettlementTime() public view returns (uint){
-        return _lastSettlementTime;
-    }
-
-    function nextSettlementTime() public view returns (uint){
-        return _lastSettlementTime + 30 days;
-    }
-
-    function getPhase() public view returns (uint256){
-        return _phase;
-    }
-
-    function getTokenInfo(uint256 tokenId) public view returns (uint8, uint256){
+    function getTokenType(uint256 tokenId) public view returns (uint8){
         require(_exists(tokenId), "ERC721: nonexistent token");
-        Token memory token = _get(tokenId);
-        return (token.cardType, token.phase);
+        return _cardType[tokenId];
     }
 
-    //Receivable interest
-    function receivableAmount(uint256 tokenId) public view returns (uint256){
+    /// @return dividends Can receive dividends
+    function _getDividends(uint256 tokenId) public view returns (uint256 dividends, uint8 cardType){
         require(_exists(tokenId), "ERC721: nonexistent token");
-        Token memory token = _get(tokenId);
-        IAgicFundPool pool = IAgicFundPool(provider.getAgicFundPool());
-
-        if (token.phase == _phase) {
-            return pool.getThisAccountPeriodAmount().mul(token.cardType).div(100);
-        } else {
-            return pool.getLastAccountPeriodAmount().mul(token.cardType).div(100);
-        }
+        uint256 totalAmount = IAgicFundPool(_provider.getAgicFundPool()).getTotalAmount();
+        cardType = _cardType[tokenId];
+        uint256 tokenTotalDividends = totalAmount.mul(cardType).div(100);
+        uint256 received = _cardReceived[tokenId];
+        dividends = tokenTotalDividends.sub(received);
     }
 
     function issuingOneCard() public payable returns (uint256) {
@@ -115,45 +70,27 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
         return _issuingCard(msg.sender, FIVE_PERCENT_METADATA_URI, 5);
     }
 
-    function receiveInterest(uint256 tokenId) public payable {
+    function receiveDividends(uint256 tokenId) public payable {
+        require(_exists(tokenId), "ERC721: nonexistent token");
         address tokenOwner = ownerOf(tokenId);
         require(msg.sender == tokenOwner, "AEC: This token doesn't belong to you");
 
-        if (_lastSettlementTime + 30 days < now) {
-            _settlement();
-        }
+        (uint256 dividends,uint8 cardType) = _getDividends(tokenId);
+        require(dividends > 0, "AEC: No dividends available");
+        _cardReceived[tokenId] = _cardReceived[tokenId].add(dividends);
 
-        Token memory token = _get(tokenId);
-        require(_phase > token.phase, "AEC: The interest has been collected");
-
-        IAgicFundPool pool = IAgicFundPool(provider.getAgicFundPool());
-        uint256 interest = pool.getLastAccountPeriodAmount().mul(token.cardType).div(100);
-        require(interest > 0, "AEC: Not have interest");
-        uint256 index = _tokens._indexes[tokenId];
-        _tokens.value[index].phase = _phase;
-        address payable to = _addressToPayable(ownerOf(tokenId));
-        pool._transfer(interest, to);
-        emit ReceiveInterest(now, msg.sender, tokenId, token.cardType, interest);
+        IAgicFundPool(_provider.getAgicFundPool())._transfer(dividends, msg.sender);
+        emit ReceiveInterest(now, msg.sender, tokenId, cardType, dividends);
     }
 
-    //Settlement of monthly interest distribution for each card
-    function _settlement() private {
-        _lastSettlementTime = now;
-        IAgicFundPool pool = IAgicFundPool(provider.getAgicFundPool());
-        pool.afterSettlement();
-        _phase = _phase.add(1);
-        emit Settlement(now, msg.sender, pool.getLastAccountPeriodAmount());
-    }
-
-    function _issuingCard(address to, string memory tokenURI, uint8 cardType) private returns (uint256) {
+    function _issuingCard(address to, string memory tokenURI, uint8 cardType) private returns (uint256 tokenId) {
         _tokenIds.increment();
-        uint256 tokenId = _tokenIds.current();
+        tokenId = _tokenIds.current();
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, tokenURI);
-        Token memory token = Token(tokenId, cardType, 0);
-        _add(token);
         _numberOfCard[cardType] += 1;
-        return tokenId;
+        _cardType[tokenId] = cardType;
+        _cardReceived[tokenId] = 0;
     }
 
     function _addressToPayable(address _address) private pure returns (address payable){

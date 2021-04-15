@@ -1,14 +1,12 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: agpl-3.0
 
 pragma solidity ^0.6.12;
 
 interface IAgicFundPool {
 
-    function getThisAccountPeriodAmount() external view returns (uint256);
+    function getBalanceOf() external view returns (uint256);
 
-    function getLastAccountPeriodAmount() external view returns (uint256);
-
-    function afterSettlement() external;
+    function getTotalAmount() external view returns (uint256);
 
     function _transfer(uint256 amount, address payable to) external;
 
