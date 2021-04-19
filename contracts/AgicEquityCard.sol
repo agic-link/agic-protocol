@@ -37,7 +37,7 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
     }
 
     /// @return dividends Can receive dividends
-    function _getDividends(uint256 tokenId) public view returns (uint256 dividends, uint8 cardType){
+    function getDividends(uint256 tokenId) public view returns (uint256 dividends, uint8 cardType){
         require(_exists(tokenId), "ERC721: nonexistent token");
         uint256 totalAmount = IAgicFundPool(_provider.getAgicFundPool()).getTotalAmount();
         cardType = _cardType[tokenId];
@@ -75,7 +75,7 @@ contract AgicEquityCard is ERC721, Ownable, ConstantMetadata {
         address tokenOwner = ownerOf(tokenId);
         require(msg.sender == tokenOwner, "AEC: This token doesn't belong to you");
 
-        (uint256 dividends,uint8 cardType) = _getDividends(tokenId);
+        (uint256 dividends, uint8 cardType) = getDividends(tokenId);
         require(dividends > 0, "AEC: No dividends available");
         _cardReceived[tokenId] = _cardReceived[tokenId].add(dividends);
 
