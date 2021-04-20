@@ -46,7 +46,7 @@ Those who purchase AEC can withdraw a certain percentage of interest every month
 ## Kovan Address 
 - AgicAddressesProvider: [0xa65CaE64DAf799a38Ca0AD6818e131007DCe14eD]
 - AgicFundPool: [0xc1f97c26bfB686cc17fE48f5eb317922662B2E56]
-- Agic: [0xd5e6c8dC9881B131bA03AE84109D6E28344EB942]
+- Agic: [0x53e53398d8260af7bbF46C7fB4fe2ecb1DCa2093]
 - AgicEquityCard: [0x107ce128dB494865F3062c8DD1977A5b78ea1ADA]
 
 ## Main Address 

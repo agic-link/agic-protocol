@@ -1520,7 +1520,7 @@ contract Agic is ConstantAddresses, ERC20, Ownable {
     }
 
     function balanceOf(address owner) public view virtual override returns (uint256) {
-        return ethBalanceOf(owner).mul(4);
+        return _ethBalanceOf(owner).mul(4);
     }
 
     function _transfer(address from, address to, uint256 amount) internal override(ERC20) {
@@ -1566,7 +1566,8 @@ contract Agic is ConstantAddresses, ERC20, Ownable {
 
         _pledgeEth[msg.sender] = userPledgeEth.sub(subPledge);
         _totalPledgeEth = _totalPledgeEth.sub(subPledge);
-        _burn(msg.sender, agic);
+        uint256 subAgic = subPledge.mul(4);
+        _burn(msg.sender, subAgic);
 
         uint256 totalWithdrawEth = withdrawEth.add(fee);
         address pool = _aaveProvider.getLendingPool();
@@ -1579,7 +1580,7 @@ contract Agic is ConstantAddresses, ERC20, Ownable {
         _safeTransferETH(msg.sender, withdrawEth);
         IAgicFundPool(_provider.getAgicFundPool()).recordTransfer{value : fee}();
 
-        emit Withdraw(subPledge, agic, msg.sender);
+        emit Withdraw(subPledge, subAgic, msg.sender);
     }
 
     /**
@@ -1599,7 +1600,7 @@ contract Agic is ConstantAddresses, ERC20, Ownable {
     }
 
     //pledge + reward
-    function ethBalanceOf(address owner) internal view notZeroAddress(owner) returns (uint256 userBalanceOf){
+    function _ethBalanceOf(address owner) internal view notZeroAddress(owner) returns (uint256 userBalanceOf){
         uint256 totalBalanceOf = _aWETH.balanceOf(address(this));
         uint256 pledgeEth = _pledgeEth[owner];
         uint256 supply;
