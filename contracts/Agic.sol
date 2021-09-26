@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: agpl-3.0
 
-pragma solidity ^0.6.12;
+pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interface/IAgicAddressesProvider.sol";
 import "./interface/IAgicFundPool.sol";
@@ -28,7 +29,7 @@ contract Agic is ConstantAddresses, ERC20, Ownable {
 
     IWETH public immutable _WETH;
 
-    constructor (address payable agicAddressesProvider) public ERC20("Automatically Generate Of Interest Coin", "AGIC") Ownable(){
+    constructor (address agicAddressesProvider) ERC20("Automatically Generate Of Interest Coin", "AGIC") Ownable(){
         _provider = IAgicAddressesProvider(agicAddressesProvider);
         _aWETH = IAToken(AAVE_ATOKEN_WETH);
         _aaveProvider = ILendingPoolAddressesProvider(AAVE_LENDING_POOL_ADDRESSES_PROVIDER);
@@ -40,11 +41,11 @@ contract Agic is ConstantAddresses, ERC20, Ownable {
         _;
     }
 
-    function totalPledgeEth() public view returns (uint256){
+    function getTotalPledgeEth() public view returns (uint256){
         return _totalPledgeEth;
     }
 
-    function pledgeEth(address owner) public view notZeroAddress(owner) returns (uint256){
+    function getPledgeEth(address owner) public view notZeroAddress(owner) returns (uint256){
         return _pledgeEth[owner];
     }
 

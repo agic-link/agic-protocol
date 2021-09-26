@@ -1,5 +1,6 @@
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const mnemonic = process.env.ETHEREUM_ACCOUNT_MNEMONIC;
+const etherscanKey= process.env.ETHERSCAN_KEY;;
 
 module.exports = {
 
@@ -10,20 +11,15 @@ module.exports = {
             port: 8545,            // Standard Ethereum port (default: none)
             network_id: "*",       // Any network (default: none)
         },
-        ropsten: {
+        kovan: {
             provider: () => {
-                return new HDWalletProvider(mnemonic, process.env.ROPSTEN_INFURA_ENDPOINT)
+                return new HDWalletProvider({
+                    mnemonic: mnemonic,
+                    providerOrUrl: process.env.KOVAN_INFURA_ENDPOINT,
+                    chainId: 42,
+                });
             },
-            network_id: '3',
-            gasPrice: 1000000000,
-            gasLimit: 100000000000000
-        },
-        mainnet: {
-            provider: () => {
-                return new HDWalletProvider(mnemonic, process.env.MAINNET_INFURA_ENDPOINT);
-            },
-            network_id: '1',
-            gasPrice: 8000000000,
+            network_id: "42",
         },
     },
 
@@ -34,15 +30,23 @@ module.exports = {
     // Configure your compilers
     compilers: {
         solc: {
-            version: "0.6.12",    // Fetch exact version from solc-bin (default: truffle's version)
+            version: "0.8.4",    // Fetch exact version from solc-bin (default: truffle's version)
             // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
-            settings: {          // See the solidity docs for advice about optimization and evmVersion
-             optimizer: {
-               enabled: false,
-               runs: 200
-             },
-            evmVersion: "istanbul"
-            }
+            // settings: {          // See the solidity docs for advice about optimization and evmVersion
+            //     optimizer: {
+            //         enabled: false,
+            //         runs: 200
+            //     },
+            // evmVersion: "istanbul"
         }
+    },
+    db: {
+        enabled: false
+    },
+    plugins: [
+        'truffle-plugin-verify'
+    ],
+    api_keys: {
+        etherscan: etherscanKey
     }
 }

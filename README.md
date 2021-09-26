@@ -1,40 +1,37 @@
-## using 
+### using 
 - truffle
-- openzeppelin/cli
 - openzeppelin/contracts
 
-## run step
+### run step
 
 #### [dev] run
 `ganache-cli`
 
 -----
 
-``` shell
-npx oz compile [--optimizer on]
-npx oz deploy
+```shell
+truffle compile [--netwrok xx]
+truffle deploy [--netwrok xx]
 ```
-
-## calls
-
-#### write
-`npx oz send-tx`
-#### read 
-`npx oz call`
-## deploy order
+### deploy order
 1. AgicAddressesProvider
 2. AgicFundPool
 3. Agic
-4. AgicEquityCard
-5. add AgicEquityCard address to AgicAddressesProvider._whiteList
+4. AgicInterestCard
+5. add AgicInterestCard address to AgicAddressesProvider._whiteList
 6. add AgicFundPool address to AgicAddressesProvider
 7. add Agic address to AgicAddressesProvider
-8. add AgicEquityCard address to AgicAddressesProvider
+8. add AgicInterestCard address to AgicAddressesProvider
 
-## building full code
-`truffle-flattener <solidity-files> > output.sol`
+### Verify etherscan
+```shell
+truffle run verify Agic --network kovan
+truffle run verify AgicAddressesProvider --network kovan
+truffle run verify AgicFundPool --network kovan
+truffle run verify AgicInterestCard --network kovan
+```
 
-## Run process
+### Run process
 Pledge ETH to agic contract, Get Agic.
 
 The pledged ETH to AAVE to earn interest
@@ -44,13 +41,7 @@ If the interest is greater than 1 finney, a fee of 1 finney will be charged for 
 Those who purchase AEC can withdraw a certain percentage of interest every month
 
 ## Kovan Address 
-- AgicAddressesProvider: [0xa65CaE64DAf799a38Ca0AD6818e131007DCe14eD]
-- AgicFundPool: [0xc1f97c26bfB686cc17fE48f5eb317922662B2E56]
-- Agic: [0x53e53398d8260af7bbF46C7fB4fe2ecb1DCa2093]
-- AgicEquityCard: [0x107ce128dB494865F3062c8DD1977A5b78ea1ADA]
-
-## Main Address 
-- AgicAddressesProvider: []
-- AgicFundPool: []
-- Agic: []
-- AgicEquityCard: []
+- AgicAddressesProvider: [0x8408d17dcFcf8ba7336d13173867d570B90085EF]
+- AgicFundPool: [0xb23a57B496C63084BDd52b5e8fAE221CB97Bb91A]
+- Agic: [0xab8224dd1F4A469ea4465EC6558a3aDC37bc3A8B]
+- AgicInterestCard: [0x6cb49575b58c4dEe20F6e2a5a407486406E1C47E]

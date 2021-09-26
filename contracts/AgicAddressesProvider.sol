@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.6.12;
+pragma solidity 0.8.4;
 
 import "./interface/IAgicAddressesProvider.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -15,7 +15,7 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
 
     address private _agic;
 
-    address private _agicEquityCard;
+    address private _agicInterestCard;
 
     address private _extendAddressesProvider;
 
@@ -23,7 +23,7 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
 
     address[] private _whiteList;
 
-    constructor() public {
+    constructor() {
         _whiteList.push();
     }
 
@@ -31,21 +31,21 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
         return _whiteList;
     }
 
-    function verifyFundPoolWhiteList(address aecAddress) override public view returns (bool){
-        return _whiteListIndex[aecAddress] != 0;
+    function verifyFundPoolWhiteList(address aicAddress) override public view returns (bool){
+        return _whiteListIndex[aicAddress] != 0;
     }
 
-    function addAgicFundPoolWhiteList(address aecAddress) public override onlyOwner {
-        require(_whiteListIndex[aecAddress] == 0, "Address already exists");
-        _whiteListIndex[aecAddress] = _whiteList.length;
-        _whiteList.push(aecAddress);
+    function addAgicFundPoolWhiteList(address aicAddress) public override onlyOwner {
+        require(_whiteListIndex[aicAddress] == 0, "Address already exists");
+        _whiteListIndex[aicAddress] = _whiteList.length;
+        _whiteList.push(aicAddress);
     }
 
-    function subAgicFundPoolWhiteList(address aecAddress) public override onlyOwner {
-        uint256 index = _whiteListIndex[aecAddress];
+    function subAgicFundPoolWhiteList(address aicAddress) public override onlyOwner {
+        uint256 index = _whiteListIndex[aicAddress];
         if (index != 0) {
             delete _whiteList[index];
-            delete _whiteListIndex[aecAddress];
+            delete _whiteListIndex[aicAddress];
             _whiteList.pop();
         }
     }
@@ -66,12 +66,12 @@ contract AgicAddressesProvider is IAgicAddressesProvider, Ownable {
         _agic = agic;
     }
 
-    function getAgicEquityCard() public view override returns (address){
-        return _agicEquityCard;
+    function getAgicInterestCard() public view override returns (address){
+        return _agicInterestCard;
     }
 
-    function setAgicEquityCard(address agicEquityCard) public override onlyOwner {
-        _agicEquityCard = agicEquityCard;
+    function setAgicInterestCard(address agicInterestCard) public override onlyOwner {
+        _agicInterestCard = agicInterestCard;
     }
 
     //Not used yet

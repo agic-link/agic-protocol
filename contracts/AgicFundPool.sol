@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.6.12;
+pragma solidity 0.8.4;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interface/IAgicAddressesProvider.sol";
 import "./interface/IAgicFundPool.sol";
@@ -16,7 +16,7 @@ contract AgicFundPool is IAgicFundPool {
 
     uint256 private _totalAmount;
 
-    constructor(address agicAddressesProvider) public {
+    constructor(address agicAddressesProvider) {
         _provider = IAgicAddressesProvider(agicAddressesProvider);
     }
 

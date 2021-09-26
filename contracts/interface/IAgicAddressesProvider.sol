@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.12;
+pragma solidity 0.8.4;
 
 /**
 @title AgicAddressesProvider interface
@@ -25,9 +25,9 @@ interface IAgicAddressesProvider {
 
     function setAgic(address agic) external;
 
-    function getAgicEquityCard() external view returns (address);
+    function getAgicInterestCard() external view returns (address);
 
-    function setAgicEquityCard(address agicEquityCard) external;
+    function setAgicInterestCard(address agicInterestCard) external;
 
     //Not used yet
     function getExtendAddressesProvider() external view returns (address);
